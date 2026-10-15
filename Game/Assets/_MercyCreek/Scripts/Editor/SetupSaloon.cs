@@ -44,11 +44,14 @@ namespace MercyCreek.EditorTools
                 mc.sharedMesh = mf.sharedMesh;
                 GameObjectUtility.SetStaticEditorFlags(mf.gameObject,
                     StaticEditorFlags.ContributeGI | StaticEditorFlags.OccluderStatic | StaticEditorFlags.OccludeeStatic | StaticEditorFlags.ReflectionProbeStatic | StaticEditorFlags.BatchingStatic);
+                // 间接光只走 APV，不烘光照贴图：太阳会动，光照贴图里的固定阳光是错的
+                mf.GetComponent<MeshRenderer>().receiveGI = ReceiveGI.LightProbes;
             }
             // 玻璃不挡阳光（窗玻璃、酒瓶、灯罩）
+            // 薄墙（0.2 m）单面投影会被法线偏移"穿透"，墙根、梁下出现亮线：一律双面投影
             foreach (var r in saloon.GetComponentsInChildren<MeshRenderer>())
-                if (r.sharedMaterials.Any(m => m && m.name.ToLower().Contains("glass")))
-                    r.shadowCastingMode = ShadowCastingMode.Off;
+                r.shadowCastingMode = r.sharedMaterials.Any(m => m && m.name.ToLower().Contains("glass"))
+                    ? ShadowCastingMode.Off : ShadowCastingMode.TwoSided;
             LogBounds(saloon, "BarTop", "Floor", "Ceiling");   // 校验坐标约定
 
             // ---------- 光 ----------
@@ -56,9 +59,10 @@ namespace MercyCreek.EditorTools
             sun.type = LightType.Directional;
             sun.shadows = LightShadows.Soft;
             sun.shadowStrength = 0.92f;
-            sun.shadowBias = 0.02f; sun.shadowNormalBias = 0.25f;
+            sun.shadowBias = 0.05f; sun.shadowNormalBias = 0.08f;
             sun.transform.rotation = Quaternion.Euler(26, 18, 0);
             sun.color = new Color(1f, 0.86f, 0.68f); sun.intensity = 3.2f;
+            sun.lightmapBakeType = LightmapBakeType.Mixed;   // 直接光实时，间接光烘进 APV
 
             var lamps = new List<Light>();
             foreach (var t in saloon.GetComponentsInChildren<Transform>().Where(t => t.name.ToLower().Contains("lantern") && t.name.EndsWith("_root")))
@@ -67,29 +71,29 @@ namespace MercyCreek.EditorTools
                 lamps.Add(PointLight($"Lamp ({t.name})", b.center + Vector3.up * 0.05f, 6f, new Color(1f, 0.66f, 0.36f), true));
             }
             lamps.Add(PointLight("Lamp (bar)", new Vector3(-5.6f, 2.5f, 5.4f), 8f, new Color(1f, 0.64f, 0.34f), true));
+            // 后墙壁灯：把墙纸照出来，也是黄昏时大厅的主要光源
+            foreach (var x in new[] { -3.4f, 0.6f, 4.6f })
+                lamps.Add(PointLight($"Sconce ({x})", new Vector3(x, 2.25f, 9.7f), 4.5f, new Color(1f, 0.62f, 0.33f), false));
             lamps.Add(PointLight("Lamp (balcony)", new Vector3(-2.5f, 5.3f, 8.8f), 7f, new Color(1f, 0.6f, 0.32f), false));
             // 模拟墙面反弹的暖色补光（无阴影）
             var fill = PointLight("Bounce Fill", new Vector3(0f, 2.6f, 4.5f), 14f, new Color(0.95f, 0.72f, 0.52f), false);
-            fill.intensity = 0.8f;
+            fill.intensity = 0.15f;                          // APV 之后只留一点点，避免死角全黑
+            fill.lightmapBakeType = LightmapBakeType.Realtime;
 
             RenderSettings.sun = sun;
-            RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = new Color(0.44f, 0.41f, 0.39f);
-            RenderSettings.ambientEquatorColor = new Color(0.34f, 0.27f, 0.2f);
-            RenderSettings.ambientGroundColor = new Color(0.11f, 0.08f, 0.06f);
+            RenderSettings.ambientMode = AmbientMode.Skybox;   // 天光从窗户进来，由 APV 烘焙
+            RenderSettings.ambientIntensity = 0.7f;
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.Exponential;
             RenderSettings.fogDensity = 0.018f;
             RenderSettings.fogColor = new Color(0.36f, 0.28f, 0.2f);
             RenderSettings.skybox = SkyboxMaterial();
 
-            var probe = new GameObject("Reflection Probe").AddComponent<ReflectionProbe>();
-            probe.transform.position = new Vector3(0, 2.2f, 5f);
-            probe.size = new Vector3(14f, 6.4f, 10f);
-            probe.boxProjection = true;
-            probe.mode = ReflectionProbeMode.Baked;
-            probe.resolution = 256;
-            probe.intensity = 0.6f;
+            // 探针盒必须完整包住房间：盒外的表面会退回去反射明亮的天空盒，墙和天花板发灰发亮
+            var probe = ReflectionProbeAt("Reflection Probe", new Vector3(0, 2.2f, 5f), new Vector3(0, 3.2f, 5f), new Vector3(14.4f, 6.8f, 10.4f));
+            var probe4 = ReflectionProbeAt("Reflection Probe Room 4", new Vector3(0, 4.6f, 11.7f), new Vector3(0, 4.7f, 11.7f), new Vector3(4.2f, 3.2f, 3.2f));
+            RenderSettings.defaultReflectionMode = DefaultReflectionMode.Skybox;
+            RenderSettings.reflectionIntensity = 0.5f;   // 只影响室外
 
             // ---------- 光柱 ----------
             var shaftMat = ShaftMaterial();
@@ -134,6 +138,9 @@ namespace MercyCreek.EditorTools
             fps.head = head;
             var interactor = player.AddComponent<PlayerInteractor>();
             interactor.cam = cam; interactor.hud = hud;
+
+            // ---------- 声音 ----------
+            SetupAudio(saloon);
 
             // ---------- 循环 ----------
             var loop = new GameObject("Loop Director").AddComponent<LoopDirector>();
@@ -182,19 +189,143 @@ namespace MercyCreek.EditorTools
                 Viewpoint(shots, "shafts", new Vector3(4.3f, 1.7f, 8.0f), new Vector3(-2.5f, 0.6f, 1.5f)),
             };
 
+            // 探针只放在室内（墙内侧），否则墙外被天光照亮的探针会沿墙根漏光
+            ProbeVolumeAt("APV Hall", new Vector3(0, 3.2f, 5f), new Vector3(13.9f, 6.35f, 9.9f));
+            ProbeVolumeAt("APV Room 4", new Vector3(0, 4.7f, 11.7f), new Vector3(3.9f, 2.9f, 2.9f));
+
             EditorSceneManager.SaveScene(scene, ScenePath);
             EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };
+            if (!Application.isBatchMode || !Environment.GetCommandLineArgs().Contains("-nobake"))
+                BakeGI(scene, loop);
             Lightmapping.BakeReflectionProbe(probe, Root + "/Scenes/Saloon/ReflectionProbe.exr");
+            Lightmapping.BakeReflectionProbe(probe4, Root + "/Scenes/Saloon/ReflectionProbeRoom4.exr");
             EditorSceneManager.SaveScene(scene, ScenePath);
             AssetDatabase.SaveAssets();
             Debug.Log("[SetupSaloon] done: " + ScenePath);
         }
 
+        // ================= 声音 =================
+
+        static AudioClip Clip(string name) =>
+            AssetDatabase.LoadAssetAtPath<AudioClip>($"{Root}/Audio/{name}.wav") ?? throw new Exception("missing audio " + name + "（先跑 tools/build_audio.sh）");
+
+        static void SetupAudio(GameObject saloon)
+        {
+            var sfx = new GameObject("Audio").AddComponent<Sfx>();
+            sfx.ambience = Clip("amb_saloon_loop"); sfx.wind = Clip("amb_wind_loop"); sfx.voidHum = Clip("void_hum_loop");
+            sfx.resetSting = Clip("reset_sting"); sfx.endingTheme = Clip("ending_theme");
+            sfx.remember = Clip("ui_remember"); sfx.denied = Clip("ui_denied"); sfx.click = Clip("ui_click");
+            sfx.tick = Clip("clock_tick"); sfx.tock = Clip("clock_tock");
+            sfx.doorOpen = Clip("door_open"); sfx.doorClose = Clip("door_close");
+            sfx.glassClink = Clip("glass_clink"); sfx.glassPour = Clip("glass_pour"); sfx.bottleSet = Clip("bottle_set");
+            sfx.typeBell = Clip("typewriter_bell"); sfx.typeReturn = Clip("typewriter_return");
+            sfx.steps = Enumerable.Range(1, 6).Select(i => Clip($"step_wood_{i:00}")).ToArray();
+            sfx.typeKeys = Enumerable.Range(1, 4).Select(i => Clip($"typewriter_key_{i:00}")).ToArray();
+            sfx.waltz = new[] { "correct", "C", "A", "G", "E" }.Select(v => Clip("piano_waltz_" + v)).ToArray();
+
+            sfx.piano = Source3D(sfx.transform, "Piano", new Vector3(3.2f, 1.0f, 9.5f), 3f, 30f);
+            sfx.clock = Source3D(sfx.transform, "Clock", new Vector3(-1.6f, 1.6f, 9.6f), 1f, 12f);
+            sfx.windows = new[]
+            {
+                Source3D(sfx.transform, "Wind Front L", new Vector3(-4f, 1.8f, 0.1f), 1.5f, 10f),
+                Source3D(sfx.transform, "Wind Front R", new Vector3(4f, 1.8f, 0.1f), 1.5f, 10f),
+                Source3D(sfx.transform, "Wind Door", new Vector3(0f, 1.4f, 0.1f), 1.5f, 10f),
+            };
+            foreach (var c in sfx.waltz.Concat(new[] { sfx.ambience, sfx.wind, sfx.voidHum, sfx.endingTheme }))
+                StreamClip(c);
+        }
+
+        static AudioSource Source3D(Transform parent, string name, Vector3 pos, float min, float max)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            go.transform.position = pos;
+            var s = go.AddComponent<AudioSource>();
+            s.spatialBlend = 1f; s.minDistance = min; s.maxDistance = max; s.rolloffMode = AudioRolloffMode.Logarithmic;
+            s.playOnAwake = false; s.dopplerLevel = 0f;
+            return s;
+        }
+
+        /// <summary>长音频走流式 + Vorbis，避免构建体积和内存爆炸。</summary>
+        static void StreamClip(AudioClip c)
+        {
+            var imp = (AudioImporter)AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(c));
+            var s = imp.defaultSampleSettings;
+            if (s.loadType == AudioClipLoadType.Streaming && s.compressionFormat == AudioCompressionFormat.Vorbis) return;
+            s.loadType = AudioClipLoadType.Streaming; s.compressionFormat = AudioCompressionFormat.Vorbis; s.quality = 0.6f;
+            imp.defaultSampleSettings = s;
+            imp.SaveAndReimport();
+        }
+
+        // ================= GI =================
+
+        /// <summary>
+        /// 烘两个 APV 光照情景：午后（循环开始）和黄昏（循环结束）。运行时 LoopDirector 按进度在两者之间混合。
+        /// </summary>
+        static void BakeGI(UnityEngine.SceneManagement.Scene scene, LoopDirector loop)
+        {
+            var ls = new LightingSettings
+            {
+                name = "Saloon Lighting",
+                bakedGI = true, realtimeGI = false,
+                mixedBakeMode = MixedLightingMode.IndirectOnly,
+                lightmapper = LightingSettings.Lightmapper.ProgressiveGPU,
+                directSampleCount = 32, indirectSampleCount = 512, environmentSampleCount = 256,
+                maxBounces = 4, lightmapResolution = 10,
+            };
+            const string lsPath = Root + "/Settings/SaloonLighting.lighting";
+            AssetDatabase.DeleteAsset(lsPath);
+            AssetDatabase.CreateAsset(ls, lsPath);
+            Lightmapping.lightingSettings = ls;
+
+            const string setPath = Root + "/Settings/Saloon Baking Set.asset";
+            var set = AssetDatabase.LoadAssetAtPath<ProbeVolumeBakingSet>(setPath);
+            if (!set)
+            {
+                set = ScriptableObject.CreateInstance<ProbeVolumeBakingSet>();
+                set.name = "Saloon Baking Set";
+                typeof(ProbeVolumeBakingSet).GetMethod("SetDefaults", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)?.Invoke(set, null);
+                AssetDatabase.CreateAsset(set, setPath);
+            }
+            set.TryAddScene(AssetDatabase.AssetPathToGUID(ScenePath));
+            set.minDistanceBetweenProbes = 0.5f;
+            set.simplificationLevels = 2;
+            foreach (var s in Scenarios) set.TryAddScenario(s.name);
+            EditorUtility.SetDirty(set);
+            AssetDatabase.SaveAssets();
+            ProbeReferenceVolume.instance.SetActiveBakingSet(set);
+
+            foreach (var (name, k) in Scenarios)
+            {
+                loop.ApplyTime(k);
+                // 场景刚新建时 ProbeReferenceVolume 可能还没挂上这个 baking set，直接设到 set 上
+                typeof(ProbeVolumeBakingSet).GetMethod("SetActiveScenario", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+                    ?.Invoke(set, new object[] { name, true });
+                ProbeReferenceVolume.instance.lightingScenario = name;
+                var t0 = DateTime.Now;
+                bool ok = Lightmapping.Bake();
+                Debug.Log($"[SetupSaloon] bake {name}: {(ok ? "ok" : "FAILED")} in {(DateTime.Now - t0).TotalSeconds:F0}s");
+            }
+            loop.ApplyTime(0f);
+            ProbeReferenceVolume.instance.lightingScenario = Scenarios[0].name;
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene, ScenePath);
+        }
+
+        public static readonly (string name, float k)[] Scenarios = { ("Afternoon", 0f), ("Dusk", 1f) };
+
         // ================= helpers =================
 
         static void SetupPipeline()
         {
-            var rp = AssetDatabase.LoadAssetAtPath<RenderPipelineAsset>(Root + "/Settings/PC_RPAsset.asset");
+            var rp = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(Root + "/Settings/PC_RPAsset.asset");
+            // APV 的开关在 URP 资产里是 internal setter，走序列化字段
+            var so = new SerializedObject(rp);
+            so.FindProperty("m_LightProbeSystem").intValue = (int)LightProbeSystem.ProbeVolumes;
+            so.FindProperty("m_SupportProbeVolumeScenarios").boolValue = true;
+            so.FindProperty("m_SupportProbeVolumeScenarioBlending").boolValue = true;
+            so.FindProperty("m_ProbeVolumeSHBands").intValue = (int)ProbeVolumeSHBands.SphericalHarmonicsL2;
+            so.ApplyModifiedPropertiesWithoutUndo();
             GraphicsSettings.defaultRenderPipeline = rp;
             int keep = QualitySettings.GetQualityLevel();
             for (int i = 0; i < QualitySettings.names.Length; i++)
@@ -211,11 +342,33 @@ namespace MercyCreek.EditorTools
             PlayerSettings.runInBackground = true;   // 评审截图时窗口不在前台
         }
 
+        static ReflectionProbe ReflectionProbeAt(string name, Vector3 capture, Vector3 boxCentre, Vector3 size)
+        {
+            var p = new GameObject(name).AddComponent<ReflectionProbe>();
+            p.transform.position = capture;
+            p.center = boxCentre - capture;
+            p.size = size;
+            p.boxProjection = true;
+            p.mode = ReflectionProbeMode.Baked;
+            p.resolution = 256;
+            p.intensity = 0.55f;
+            return p;
+        }
+
+        static void ProbeVolumeAt(string name, Vector3 centre, Vector3 size)
+        {
+            var pv = new GameObject(name).AddComponent<ProbeVolume>();
+            pv.mode = ProbeVolume.Mode.Local;
+            pv.transform.position = centre;
+            pv.size = size;
+        }
+
         static Light PointLight(string name, Vector3 pos, float range, Color color, bool shadows)
         {
             var l = new GameObject(name).AddComponent<Light>();
             l.type = LightType.Point; l.transform.position = pos; l.range = range; l.color = color; l.intensity = 1f;
             l.shadows = shadows ? LightShadows.Soft : LightShadows.None;
+            l.lightmapBakeType = LightmapBakeType.Mixed;
             return l;
         }
 
@@ -298,16 +451,20 @@ namespace MercyCreek.EditorTools
             var p = NewProfile("Grade");
             var tone = Add<Tonemapping>(p); tone.mode.Override(TonemappingMode.ACES);
             var ca = Add<ColorAdjustments>(p);
-            ca.postExposure.Override(0.75f); ca.contrast.Override(14f); ca.saturation.Override(-10f);
+            ca.postExposure.Override(1.1f); ca.contrast.Override(14f); ca.saturation.Override(-10f);
             ca.colorFilter.Override(new Color(1f, 0.97f, 0.92f));
             var wb = Add<WhiteBalance>(p); wb.temperature.Override(8f);
             var smh = Add<ShadowsMidtonesHighlights>(p);
-            smh.shadows.Override(new Vector4(0.92f, 1f, 1.06f, 0f));
+            smh.shadows.Override(new Vector4(0.97f, 1f, 1.03f, 0f));
             smh.highlights.Override(new Vector4(1.05f, 1f, 0.94f, 0f));
             var bloom = Add<Bloom>(p); bloom.threshold.Override(1.0f); bloom.intensity.Override(0.5f); bloom.scatter.Override(0.65f);
             var vig = Add<Vignette>(p); vig.intensity.Override(0.3f); vig.smoothness.Override(0.45f);
             var grain = Add<FilmGrain>(p); grain.type.Override(FilmGrainLookup.Medium2); grain.intensity.Override(0.28f); grain.response.Override(0.7f);
             var chrom = Add<ChromaticAberration>(p); chrom.intensity.Override(0.06f);
+            var apv = Add<ProbeVolumesOptions>(p);
+            apv.leakReductionMode.Override(APVLeakReductionMode.Quality);
+            apv.normalBias.Override(0.2f); apv.viewBias.Override(0.25f);
+            apv.samplingNoise.Override(0.05f);
             Save(p);
             return p;
         }

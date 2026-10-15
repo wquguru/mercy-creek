@@ -46,6 +46,7 @@ namespace MercyCreek
         IEnumerator Start()
         {
             if (LoopMemory.Loop > 1) hud.Say($"<i>……又是这个下午。</i>", 4f);
+            Invoke(nameof(StartPiano), 3f);
             ApplyTime(0f);
             for (float f = 1; f > 0; f -= Time.deltaTime / 1.6f) { hud.Fade = f; yield return null; }
             hud.Fade = 0;
@@ -64,8 +65,16 @@ namespace MercyCreek
             if (_t >= loopSeconds) StartCoroutine(ResetLoop());
         }
 
-        void ApplyTime(float k)
+        /// <summary>k = 循环进度 0..1。编辑器烘焙光照情景时也会调用。</summary>
+        public void ApplyTime(float k)
         {
+            // APV：午后 → 黄昏两个烘焙情景之间混合（场景没烘过时静默跳过）
+            if (Application.isPlaying && ProbeReferenceVolume.instance.isInitialized)
+            {
+                if (ProbeReferenceVolume.instance.lightingScenario != "Afternoon")
+                    ProbeReferenceVolume.instance.lightingScenario = "Afternoon";
+                ProbeReferenceVolume.instance.BlendLightingScenario("Dusk", Smooth(k));
+            }
             float e = Mathf.Lerp(elevationStart, elevationEnd, Smooth(k));
             if (sun)
             {
@@ -79,6 +88,8 @@ namespace MercyCreek
             if (clockMinuteHand) clockMinuteHand.localRotation = Quaternion.Euler(0, 0, -k * 360f * 0.5f);
         }
 
+        void StartPiano() => Sfx.I?.StartPiano(LoopMemory.Loop);
+
         static float Smooth(float x) => x * x * (3f - 2f * x);
 
         IEnumerator ResetLoop()
@@ -87,6 +98,7 @@ namespace MercyCreek
             var player = FindFirstObjectByType<FirstPersonController>();
             if (player) player.InputLocked = true;
             hud.Say("<i>……</i>", 3f);
+            if (Sfx.I) { Sfx.I.StopPiano(1.2f); Sfx.I.FadeAmbience(0f, 1.5f); Sfx.I.Play2D(Sfx.I.resetSting, 0.9f); }
             // 世界先冻结褪色，再黑场
             for (float w = 0; w < 1; w += Time.unscaledDeltaTime / 1.8f)
             {

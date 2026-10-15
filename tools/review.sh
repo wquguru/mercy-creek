@@ -1,6 +1,7 @@
 #!/bin/zsh
 # 一键：重建场景 → Mac 开发构建 → 自动截图到 Reviews/unity/
-# 用法：tools/review.sh [--no-setup] [--no-build]
+# 用法：tools/review.sh [--no-setup] [--no-build] [--test]
+# 排查画面：SHOT_ARGS="-debug noapv -only bar -times 8" tools/review.sh --no-setup --no-build
 set -u
 ROOT=${0:A:h:h}
 P=$ROOT/Game
@@ -16,7 +17,7 @@ run_unity() {   # $1 = method, $2 = log name
 [[ " $* " == *" --no-build "* ]] || { echo "== build"; run_unity MercyCreek.EditorTools.BuildMac.Run build || exit 1; }
 echo "== autoshot"
 rm -rf "$R"; mkdir -p "$R"
-"$P/Builds/Mac/MercyCreek.app/Contents/MacOS/Mercy Creek" -autoshot "$R" -screen-width 1600 -screen-height 900 -screen-fullscreen 0 -logFile - > "$P/Logs/player.log" 2>&1 &
+"$P/Builds/Mac/MercyCreek.app/Contents/MacOS/Mercy Creek" -autoshot "$R" ${=SHOT_ARGS:-} -screen-width 1600 -screen-height 900 -screen-fullscreen 0 -logFile - > "$P/Logs/player.log" 2>&1 &
 PID=$!
 for i in {1..150}; do sleep 1; kill -0 $PID 2>/dev/null || break; done
 kill $PID 2>/dev/null

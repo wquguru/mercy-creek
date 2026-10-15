@@ -30,7 +30,12 @@ namespace MercyCreek
 
             if (string.IsNullOrEmpty(fragmentId)) return firstText;
             if (LoopMemory.Has(fragmentId)) return rememberedText;
-            if (LoopMemory.TryRemember(fragmentId)) return firstText + "\n<i>（你决定记住这个。）</i>";
+            if (LoopMemory.TryRemember(fragmentId))
+            {
+                Sfx.I?.Play2D(Sfx.I.remember, 0.8f);
+                return firstText + "\n<i>（你决定记住这个。）</i>";
+            }
+            Sfx.I?.Play2D(Sfx.I.denied, 0.6f);
             return firstText + "\n<i>（你隐约知道，这一轮记不住更多了。）</i>";
         }
     }

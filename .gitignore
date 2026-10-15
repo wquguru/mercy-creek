@@ -15,11 +15,22 @@
 # 评审截图每次重新生成
 /Reviews/unity/
 /Reviews/autotest/
+/Reviews/blender/
 create.log
 .DS_Store
 # 可由脚本重建的产物（见 tools/bootstrap.sh）
 /art/blender/*.blend
 /Game/Assets/_MercyCreek/Art/Saloon/Saloon.glb
+/Game/Assets/_MercyCreek/Art/Props/*.glb
+/Game/Assets/_MercyCreek/Art/Characters/*.glb
+/Game/Assets/_MercyCreek/Art/Street/*.glb
 /Game/Assets/_MercyCreek/Art/HDRI/*.exr
 /Game/Assets/_MercyCreek/Scenes/Saloon/*.exr
 /.venv/
+/Reviews/audio/
+__pycache__/
+# 程序合成的音频（tools/build_audio.sh 重建；.meta 要提交）
+/Game/Assets/_MercyCreek/Audio/*.wav
+/art/generated/
+# Blender 脚本生成的模型（tools/blender/*.py 重建；.meta 要提交）
+/Game/Assets/_MercyCreek/Art/**/*.glb

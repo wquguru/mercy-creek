@@ -14,7 +14,15 @@ PH_MODELS = [
     "wooden_display_shelves_01", "dartboard", "hanging_picture_frame_03", "barrel_stove",
 ]
 PH_HDRIS = ["goegap_road", "plains_sunset", "aarfontein_pan"]
-AC_MATERIALS = ["WoodFloor041", "WoodFloor043", "Planks037A", "Planks021", "WoodSiding011", "WoodSiding013", "Wallpaper002A"]
+AC_MATERIALS = ["WoodFloor041", "WoodFloor043", "Planks037A", "Planks021", "WoodSiding011", "WoodSiding013", "Wallpaper002A", "Wallpaper002B",
+                # 人偶 / 钢琴 / 道具 / 街景（tools/blender/build_{mannequin,piano,props,street}.py）
+                "Wood050", "Wood092", "Wood066", "Wood027", "Fabric032", "Fabric061", "Fabric063", "Fabric066",
+                "Fabric040", "Fabric022", "Fabric026", "Fabric028", "Leather037", "Leather030", "Leather026",
+                "Metal027", "Paper005", "Ground054", "Ground080", "Ground033", "WoodSiding009", "WoodSiding002",
+                "WoodSiding004", "WoodSiding010", "PaintedWood009C", "PaintedWood008B", "Planks012"]
+# SIL OFL 字体：只用来把招牌文字栅格化成贴图（字体文件本身不进工程）
+FONTS = {"Rye-Regular.ttf": "https://github.com/google/fonts/raw/main/ofl/rye/Rye-Regular.ttf",
+         "Rye-OFL.txt": "https://github.com/google/fonts/raw/main/ofl/rye/OFL.txt"}
 
 UA = {"User-Agent": "mercy-creek-asset-fetch/1.0"}
 
@@ -76,8 +84,13 @@ def ac_material(asset_id):
     return asset_id
 
 
+def font(name):
+    save(FONTS[name], ROOT / "fonts" / name)
+    return name
+
+
 def main():
-    jobs = [(ph_model, a) for a in PH_MODELS] + [(ph_hdri, a) for a in PH_HDRIS] + [(ac_material, a) for a in AC_MATERIALS]
+    jobs = [(ph_model, a) for a in PH_MODELS] + [(ph_hdri, a) for a in PH_HDRIS] + [(ac_material, a) for a in AC_MATERIALS] + [(font, f) for f in FONTS]
     failed = []
     with cf.ThreadPoolExecutor(6) as ex:
         futs = {ex.submit(f, a): a for f, a in jobs}

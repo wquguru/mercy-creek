@@ -34,7 +34,7 @@ def ac_mat(name, asset, tile=1.0, tint=None, rough_mul=1.0):
     m = bpy.data.materials.new(name)
     nt = m.node_tree; n = nt.nodes; l = nt.links
     bsdf = n["Principled BSDF"]
-    d = SRC / "ambientcg" / asset
+    d = (SRC.parent / "generated" / asset[4:]) if asset.startswith("gen:") else SRC / "ambientcg" / asset
     def tex(suffix, non_color=False):
         f = next(d.glob(f"*_{suffix}.jpg"), None)
         if not f: return None
@@ -79,12 +79,12 @@ def flat_mat(name, color, rough=0.6, metal=0.0, emit=None, emit_strength=0.0, al
 
 
 M = {
-    "floor":   ac_mat("Floor", "WoodFloor041", 2.0, tint=(0.75, 0.62, 0.5)),
-    "wall":    ac_mat("WallPlanks", "Planks037A", 3.2, tint=(0.85, 0.75, 0.62)),
-    "paper":   ac_mat("Wallpaper", "Wallpaper002A", 1.5, tint=(0.5, 0.38, 0.28)),
-    "ceiling": ac_mat("Ceiling", "Planks021", 2.0, tint=(0.55, 0.45, 0.38)),
+    "floor":   ac_mat("Floor", "WoodFloor041", 2.0, tint=(0.75, 0.62, 0.5), rough_mul=1.3),
+    "wall":    ac_mat("WallPlanks", "Planks037A", 3.2, tint=(0.55, 0.36, 0.22)),
+    "paper":   ac_mat("Wallpaper", "gen:WallpaperDamask", 1.0),   # tools/textures/make_wallpaper.py
+    "ceiling": ac_mat("Ceiling", "Planks021", 2.0, tint=(0.42, 0.3, 0.2)),
     "trim":    ac_mat("Trim", "WoodFloor043", 1.5, tint=(0.45, 0.3, 0.2)),
-    "bar":     ac_mat("BarWood", "WoodFloor043", 1.2, tint=(0.38, 0.22, 0.13), rough_mul=0.85),
+    "bar":     ac_mat("BarWood", "WoodFloor043", 1.2, tint=(0.38, 0.22, 0.13), rough_mul=1.15),
     "siding":  ac_mat("Siding", "WoodSiding013", 3.0),
     "glass":   flat_mat("DirtyGlass", (0.85, 0.82, 0.7), rough=0.15, transmission=0.9),
     "brass":   flat_mat("Brass", (0.75, 0.55, 0.25), rough=0.3, metal=1.0),
@@ -172,7 +172,26 @@ for i in range(8):  # 天花梁
 DOOR = (-0.9, 0.9, 0.0, 2.7)
 FRONT_WIN = [(-5.4, -2.6, 0.9, 2.8), (2.6, 5.4, 0.9, 2.8), (-5.0, -3.0, 4.0, 5.6), (3.0, 5.0, 4.0, 5.6)]
 wall_x("FrontWall", -T, 0, 0, H, [DOOR, *FRONT_WIN], M["wall"])
-wall_x("BackWall", DEPTH, DEPTH + T, 0, H, [(-0.6, 0.6, BALC_Z, BALC_Z + 2.3)], M["wall"])  # 二楼后门：上锁房间
+ROOM4_DOOR = (-0.6, 0.6, BALC_Z, BALC_Z + 2.3)     # 二楼：上锁的 4 号房（觉醒结局）
+BACK_DOOR = (5.6, 6.6, 0.0, 2.3)                     # 一楼：后门（出逃结局，门外什么都没有）
+wall_x("BackWall", DEPTH, DEPTH + T, 0, H, [ROOM4_DOOR, BACK_DOOR], M["wall"])
+# 后门门框
+for nm, a, b, z0, z1 in [("BackDoorJambL", 5.52, 5.6, 0, 2.38), ("BackDoorJambR", 6.6, 6.68, 0, 2.38), ("BackDoorHead", 5.52, 6.68, 2.3, 2.38)]:
+    box(nm, a, b, DEPTH - 0.04, DEPTH + T + 0.02, z0, z1, M["trim"])
+# 4 号房：后墙外加一间 4 m × 3 m 的小房间
+R4X0, R4X1, R4Y1 = -2.0, 2.0, DEPTH + T + 3.0
+box("Room4Floor", R4X0, R4X1, DEPTH + T, R4Y1, BALC_Z - 0.2, BALC_Z, M["floor"])
+box("Room4Ceiling", R4X0, R4X1, DEPTH + T, R4Y1, H - 0.4, H - 0.2, M["ceiling"])
+box("Room4Under", R4X0 - T, R4X1 + T, DEPTH + T, R4Y1 + T, 0, BALC_Z - 0.2, M["siding"])
+box("Room4WallL", R4X0 - T, R4X0, DEPTH + T, R4Y1, BALC_Z - 0.2, H - 0.2, M["wall"])
+box("Room4WallR", R4X1, R4X1 + T, DEPTH + T, R4Y1, BALC_Z - 0.2, H - 0.2, M["wall"])
+box("Room4Back_lo", R4X0 - T, R4X1 + T, R4Y1, R4Y1 + T, BALC_Z - 0.2, BALC_Z + 0.9, M["wall"])
+box("Room4Back_hi", R4X0 - T, R4X1 + T, R4Y1, R4Y1 + T, BALC_Z + 2.1, H - 0.2, M["wall"])
+box("Room4Back_l", R4X0 - T, -0.6, R4Y1, R4Y1 + T, BALC_Z + 0.9, BALC_Z + 2.1, M["wall"])
+box("Room4Back_r", 0.6, R4X1 + T, R4Y1, R4Y1 + T, BALC_Z + 0.9, BALC_Z + 2.1, M["wall"])
+box("Room4Roof", R4X0 - T, R4X1 + T, DEPTH + T, R4Y1 + T, H - 0.2, H, M["trim"])
+window_frame("x", -0.6, 0.6, BALC_Z + 0.9, BALC_Z + 2.1, R4Y1 + T / 2)
+box("Room4Paper", R4X0 + 0.01, R4X1 - 0.01, R4Y1 - 0.005, R4Y1, BALC_Z + 1.0, H - 0.4, M["paper"])
 LEFT_WIN = [(1.2, 2.6, 1.2, 2.6)]
 wall_y("LeftWall", X0 - T, X0, 0, H, LEFT_WIN, M["wall"])
 wall_y("RightWall", X1, X1 + T, 0, H, [(3.0, 4.6, 0.9, 2.6), (5.6, 7.2, 4.0, 5.4)], M["wall"])
@@ -182,9 +201,13 @@ window_frame("y", 3.0, 4.6, 0.9, 2.6, X1 + T / 2)
 window_frame("y", 5.6, 7.2, 4.0, 5.4, X1 + T / 2)
 
 # 墙裙 + 上半部墙纸（后墙一层）
-box("Wainscot", X0, X1, DEPTH - 0.02, DEPTH, 0, 1.1, M["trim"])
-box("WallpaperBack", X0 + 0.01, X1 - 0.01, DEPTH - 0.025, DEPTH - 0.02, 1.1, BALC_Z - 0.3, M["paper"])
-box("ChairRail", X0, X1, DEPTH - 0.06, DEPTH, 1.08, 1.16, M["trim"])
+wall_x("Wainscot", DEPTH - 0.02, DEPTH, 0, 1.1, [BACK_DOOR], M["trim"])
+wall_x("WallpaperBack", DEPTH - 0.025, DEPTH - 0.02, 1.1, BALC_Z - 0.3, [BACK_DOOR], M["paper"])
+wall_x("ChairRail", DEPTH - 0.06, DEPTH, 1.08, 1.16, [BACK_DOOR], M["trim"])
+# 二楼走廊的后墙也贴墙纸
+wall_x("WallpaperBackUpper", DEPTH - 0.025, DEPTH - 0.02, BALC_Z + 1.0, H - 0.05, [ROOM4_DOOR], M["paper"])
+wall_x("WainscotUpper", DEPTH - 0.02, DEPTH, BALC_Z, BALC_Z + 1.0, [ROOM4_DOOR], M["trim"])
+wall_x("ChairRailUpper", DEPTH - 0.06, DEPTH, BALC_Z + 0.98, BALC_Z + 1.06, [ROOM4_DOOR], M["trim"])
 
 # 二楼回廊（后墙一侧 + 右墙一侧）
 box("BalconyBack", X0, X1, DEPTH - BALC_D, DEPTH, BALC_Z - 0.25, BALC_Z, M["floor"])
@@ -228,6 +251,16 @@ for k, z in enumerate((1.45, 1.9)):
     box(f"Shelf{k}", X0, X0 + 0.3, 3.0, 4.6, z, z + 0.04, M["bar"])
     box(f"ShelfB{k}", X0, X0 + 0.3, 6.2, 7.8, z, z + 0.04, M["bar"])
 box("BackBarCrown", X0, X0 + 0.35, 3.0, 7.8, 2.6, 2.8, M["trim"])
+
+# 后墙壁灯（Unity 里在同一位置放点光源，见 SetupSaloon）
+M["flame"] = flat_mat("LampFlame", (1.0, 0.75, 0.45), rough=0.4, emit=(1.0, 0.62, 0.3), emit_strength=6.0)
+for sx in (-3.4, 0.6, 4.6):
+    box(f"SconcePlate{sx}", sx - 0.07, sx + 0.07, DEPTH - 0.045, DEPTH - 0.025, 1.95, 2.2, M["brass"], col="Props")
+    box(f"SconceArm{sx}", sx - 0.015, sx + 0.015, DEPTH - 0.3, DEPTH - 0.04, 2.02, 2.05, M["brass"], col="Props")
+    box(f"SconceCup{sx}", sx - 0.06, sx + 0.06, DEPTH - 0.36, DEPTH - 0.24, 2.05, 2.12, M["brass"], col="Props")
+    g = box(f"SconceGlass{sx}", sx - 0.045, sx + 0.045, DEPTH - 0.345, DEPTH - 0.255, 2.12, 2.36, M["glass"], col="Props")
+    g.visible_shadow = False
+    box(f"SconceFlame{sx}", sx - 0.012, sx + 0.012, DEPTH - 0.312, DEPTH - 0.288, 2.14, 2.2, M["flame"], col="Props")
 
 # 自动钢琴（Tripo 之前的占位）
 PIANO = (3.2, DEPTH - 0.35)
@@ -307,7 +340,7 @@ prop("ornate_mirror_01", X0 + 0.08, 5.4, rot_deg=-90, z=1.15, scale=1.5)
 
 # 后墙：座钟（循环的核心道具）、钢琴旁的摇椅
 prop("vintage_grandfather_clock_01", -1.6, DEPTH - 0.35, rot_deg=180)
-prop("Rockingchair_01", 5.2, DEPTH - 1.2, rot_deg=200)
+prop("Rockingchair_01", 4.7, DEPTH - 1.5, rot_deg=200)
 
 # 酒桶、木箱：吧台尽头
 prop("wooden_barrels_01", X0 + 1.0, 9.0, rot_deg=10)

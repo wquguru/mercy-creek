@@ -16,7 +16,7 @@ namespace MercyCreek
         public bool InputLocked { get; set; }
 
         CharacterController _cc;
-        float _pitch, _vy, _bob;
+        float _pitch, _vy, _bob, _stride;
         Vector3 _headRest;
 
         void Awake()
@@ -70,6 +70,8 @@ namespace MercyCreek
             {
                 float planar = new Vector2(_cc.velocity.x, _cc.velocity.z).magnitude;
                 _bob += planar * Time.deltaTime * 5.5f;
+                _stride += planar * Time.deltaTime;
+                if (_stride > 0.72f && _cc.isGrounded) { _stride = 0f; Sfx.I?.Step(transform.position, 0.5f); }
                 float amp = Mathf.Clamp01(planar / fastSpeed) * 0.025f;
                 head.localPosition = _headRest + new Vector3(0f, Mathf.Sin(_bob) * amp, 0f);
             }
