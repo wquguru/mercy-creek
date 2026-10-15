@@ -1,0 +1,104 @@
+using System.Collections;
+using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.SceneManagement;
+
+namespace MercyCreek
+{
+    /// <summary>
+    /// 一个下午 = 一轮循环。太阳从午后落到黄昏，油灯渐亮；时间到了，世界褪色、断裂、重来。
+    /// </summary>
+    public class LoopDirector : MonoBehaviour
+    {
+        public float loopSeconds = 180f;
+        public Light sun;
+        public Light[] lamps;
+        public Volume resetVolume;          // 重置瞬间：去饱和 + 冷色
+        public Hud hud;
+        public Transform clockMinuteHand;   // 可选：座钟分针
+
+        [Header("太阳：仰角 / 方位（度）")]
+        public float elevationStart = 26f, elevationEnd = 8f;
+        public float azimuth = 18f;         // 0 = 光朝 +Z（从前窗射入），正值 = 偏向 +X（光斑落进大厅中央）
+        public Color sunStart = new(1f, 0.86f, 0.68f), sunEnd = new(1f, 0.52f, 0.25f);
+        public float sunIntensityStart = 3.2f, sunIntensityEnd = 1.6f;
+        public float lampIntensityStart = 0.4f, lampIntensityEnd = 2.2f;
+
+        // 每轮同样的时间点发生同样的事。占位剧本，NPC 做好后换成真实事件。
+        static readonly (float t, string line)[] Script =
+        {
+            (4f,   "下午三点。钢琴开始弹那首曲子。"),
+            (40f,  "你擦着同一个杯子。杯沿有一道你很熟悉的缺口。"),
+            (75f,  "门被推开。一个陌生人走进来，靴子上全是土。"),
+            (120f, "陌生人在角落坐下，要了一杯威士忌。他一直在看那座钟。"),
+            (160f, "光线变红了。你突然很想记住点什么。"),
+        };
+
+        float _t;
+        int _next;
+        bool _resetting;
+
+        public float Elapsed => _t;
+
+        /// <summary>评审截图用：直接跳到某个时间点。</summary>
+        public void Skip(float seconds) { _t = seconds; ApplyTime(Mathf.Clamp01(_t / loopSeconds)); }
+
+        IEnumerator Start()
+        {
+            if (LoopMemory.Loop > 1) hud.Say($"<i>……又是这个下午。</i>", 4f);
+            ApplyTime(0f);
+            for (float f = 1; f > 0; f -= Time.deltaTime / 1.6f) { hud.Fade = f; yield return null; }
+            hud.Fade = 0;
+        }
+
+        void Update()
+        {
+            if (_resetting) return;
+            _t += Time.deltaTime;
+            LoopMemory.TotalSeconds += Time.deltaTime;
+            ApplyTime(Mathf.Clamp01(_t / loopSeconds));
+
+            while (_next < Script.Length && _t >= Script[_next].t)
+                hud.Say(Script[_next++].line, 6f);
+
+            if (_t >= loopSeconds) StartCoroutine(ResetLoop());
+        }
+
+        void ApplyTime(float k)
+        {
+            float e = Mathf.Lerp(elevationStart, elevationEnd, Smooth(k));
+            if (sun)
+            {
+                sun.transform.rotation = Quaternion.Euler(e, azimuth, 0f);
+                sun.color = Color.Lerp(sunStart, sunEnd, Smooth(k));
+                sun.intensity = Mathf.Lerp(sunIntensityStart, sunIntensityEnd, k);
+            }
+            if (lamps != null)
+                foreach (var l in lamps)
+                    if (l) l.intensity = Mathf.Lerp(lampIntensityStart, lampIntensityEnd, Smooth(k)) * (1f + 0.04f * Mathf.Sin(Time.time * 9f + l.GetInstanceID()));
+            if (clockMinuteHand) clockMinuteHand.localRotation = Quaternion.Euler(0, 0, -k * 360f * 0.5f);
+        }
+
+        static float Smooth(float x) => x * x * (3f - 2f * x);
+
+        IEnumerator ResetLoop()
+        {
+            _resetting = true;
+            var player = FindFirstObjectByType<FirstPersonController>();
+            if (player) player.InputLocked = true;
+            hud.Say("<i>……</i>", 3f);
+            // 世界先冻结褪色，再黑场
+            for (float w = 0; w < 1; w += Time.unscaledDeltaTime / 1.8f)
+            {
+                if (resetVolume) resetVolume.weight = w;
+                Time.timeScale = Mathf.Lerp(1f, 0.15f, w);
+                yield return null;
+            }
+            for (float f = 0; f < 1; f += Time.unscaledDeltaTime / 0.8f) { hud.Fade = f; yield return null; }
+            hud.Fade = 1;
+            Time.timeScale = 1f;
+            LoopMemory.NextLoop();
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        }
+    }
+}

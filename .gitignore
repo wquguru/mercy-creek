@@ -1,0 +1,25 @@
+# Unity（工程在 Game/）
+/Game/Library/
+/Game/Temp/
+/Game/Obj/
+/Game/Build/
+/Game/Builds/
+/Game/Logs/
+/Game/UserSettings/
+/Game/*.csproj
+/Game/*.sln
+# Blender
+*.blend1
+# 下载的源资产可由 tools/fetch_assets.py 重新获取
+/art/source/
+# 评审截图每次重新生成
+/Reviews/unity/
+/Reviews/autotest/
+create.log
+.DS_Store
+# 可由脚本重建的产物（见 tools/bootstrap.sh）
+/art/blender/*.blend
+/Game/Assets/_MercyCreek/Art/Saloon/Saloon.glb
+/Game/Assets/_MercyCreek/Art/HDRI/*.exr
+/Game/Assets/_MercyCreek/Scenes/Saloon/*.exr
+/.venv/
