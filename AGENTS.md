@@ -50,9 +50,9 @@ Reviews/             评审截图（unity/ 与 autotest/ 每次重新生成，gi
 | 重下 CC0 资产 | `python3 tools/fetch_assets.py` |
 | 重建酒馆模型并导出 | `blender --background --python tools/blender/build_saloon.py -- --export Game/Assets/_MercyCreek/Art/Saloon/Saloon.gltf` |
 | 重建场景 + Mac 构建 + 截图 | `tools/review.sh` |
-| 同上并自动通关（三个结局各一遍，含标题 / 分享卡片截图） | `tools/review.sh --test` |
-| 只截图 | `tools/review.sh --no-setup --no-build` |
-| Web 构建 | `tools/build_web.sh`（输出 `Game/Builds/Web/`，约 65MB） |
+| 同上并自动通关（三个结局 + town 路线 + walls 隐形墙各一遍，含标题 / 开场 / 记忆本 / 分享卡片截图） | `tools/review.sh --test` |
+| 只截图（默认第 3 稿；`SHOT_ARGS="-loop 1"` 拍第 1 稿） | `tools/review.sh --no-setup --no-build` |
+| Web 构建 | `tools/build_web.sh`（输出 `Game/Builds/Web/`，约 92MB） |
 | Web 冒烟测试（本机 Chrome WebGPU，标题截图 + 一个结局自动通关） | `node tools/webtest/webtest.mjs 8700 awaken`（首次先 `cd tools/webtest && npm install`） |
 | 本地试玩网页版 | `python3 -m http.server -d Game/Builds/Web 8700` → http://localhost:8700/?lang=zh |
 | 排查画面（关掉某个光照成分） | `SHOT_ARGS="-debug noprobe -only bar -times 8" tools/review.sh --no-setup --no-build` |
@@ -94,6 +94,9 @@ Reviews/             评审截图（unity/ 与 autotest/ 每次重新生成，gi
 | M6 | ☑ 界面与流程 | 标题画面、设置（鼠标灵敏度、音量、语言中 / 英）、暂停菜单、存档（当前轮数与碎片）、内嵌 OFL 中文字体、分享卡片（轮数 + 用时 + 结局徽记，可保存 PNG） |
 | M7 | ☑ Web 版 | WebGPU 构建可在 Chrome 打开并通关；首包 ≤ 200MB；加载进度条；不支持 WebGPU 时显示说明页 |
 | M8 | ◐ 发布准备 | 30 秒宣传片（脚本化机位 + ffmpeg 合成）、落地页、README、致谢与授权清单。**上线 / 公开发布前必须问人** |
+| M9 | ☑ 易懂性 | "第 N 稿"框架、开场打字页、重置稿数卡、Tab 记忆本（含下一步提示）、乐谱线索、"结束这个下午" |
+| M10 | ☑ 主街 | 一条街可走：北侧 4 栋 + 电报局室内、南侧 5 栋、东头教堂墓地、西头画布（出逃）；酒馆外立面；按稿数解锁；隐形墙不漏 |
+| M11 | ☑ 马车与镇民 | 驿站马车 + 两匹木头马从画布驶出、停在酒馆门口、克兰下车；车轮 / 马步不打滑；3 个定格镇民随稿数转头；室外音效（马蹄、车轮、电报、教堂钟、街道风、土路 / 栈道脚步） |
 
 ## 9. 不要做的事
 - 不要公开仓库、不要部署到公网、不要发帖：这些都要人来点头

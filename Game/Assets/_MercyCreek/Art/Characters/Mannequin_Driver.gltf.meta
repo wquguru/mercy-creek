@@ -1,0 +1,121 @@
+fileFormatVersion: 2
+guid: 9bc956a3d840243fab4d62fec1e633d6
+ScriptedImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 2
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+  script: {fileID: 11500000, guid: 715df9372183c47e389bb6e19fbc3b52, type: 3}
+  editorImportSettings:
+    generateSecondaryUVSet: 0
+  importSettings:
+    nodeNameMethod: 1
+    animationMethod: 2
+    generateMipMaps: 1
+    texturesReadable: 0
+    defaultMinFilterMode: 9729
+    defaultMagFilterMode: 9729
+    anisotropicFilterLevel: 1
+  instantiationSettings:
+    mask: -1
+    layer: 0
+    skinUpdateWhenOffscreen: 1
+    lightIntensityFactor: 1
+    sceneObjectCreation: 2
+  assetDependencies:
+  - type: 0
+    originalUri: Assets/_MercyCreek/Art/Characters/Mannequin_Driver.bin
+    assetPath: Assets/_MercyCreek/Art/Characters/Mannequin_Driver.bin
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Fabric066_NormalGL_1024.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Fabric066_NormalGL_1024.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Fabric066_Color_1024_t403326.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Fabric066_Color_1024_t403326.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Fabric066_Roughness_1024.png
+    assetPath: Assets/_MercyCreek/Art/Textures/Fabric066_Roughness_1024.png
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Fabric063_NormalGL_1024.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Fabric063_NormalGL_1024.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Fabric063_Color_1024_t504743.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Fabric063_Color_1024_t504743.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Fabric063_Roughness_1024.png
+    assetPath: Assets/_MercyCreek/Art/Textures/Fabric063_Roughness_1024.png
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Leather037_NormalGL_1024.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Leather037_NormalGL_1024.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Leather037_Color_1024_t423630.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Leather037_Color_1024_t423630.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Leather037_Roughness_1024_m130_a10.png
+    assetPath: Assets/_MercyCreek/Art/Textures/Leather037_Roughness_1024_m130_a10.png
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Wood050_NormalGL_2048.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Wood050_NormalGL_2048.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Wood050_Color_2048_t868068.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Wood050_Color_2048_t868068.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Wood050_Roughness_2048_m60.png
+    assetPath: Assets/_MercyCreek/Art/Textures/Wood050_Roughness_2048_m60.png
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Wood092_NormalGL_1024.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Wood092_NormalGL_1024.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Wood092_Color_1024_t453325.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Wood092_Color_1024_t453325.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Wood092_Roughness_1024_m50.png
+    assetPath: Assets/_MercyCreek/Art/Textures/Wood092_Roughness_1024_m50.png
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Fabric032_NormalGL_1024.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Fabric032_NormalGL_1024.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Fabric032_Color_1024_t551208.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Fabric032_Color_1024_t551208.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Fabric032_Roughness_1024.png
+    assetPath: Assets/_MercyCreek/Art/Textures/Fabric032_Roughness_1024.png
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Fabric032_Color_1024_t706660.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Fabric032_Color_1024_t706660.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Fabric061_NormalGL_1024.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Fabric061_NormalGL_1024.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Fabric061_Color_1024_t363432.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Fabric061_Color_1024_t363432.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Fabric061_Roughness_1024.png
+    assetPath: Assets/_MercyCreek/Art/Textures/Fabric061_Roughness_1024.png
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Leather037_Color_1024_t786246.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Leather037_Color_1024_t786246.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Leather037_Roughness_1024_m90.png
+    assetPath: Assets/_MercyCreek/Art/Textures/Leather037_Roughness_1024_m90.png
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Fabric028_NormalGL_1024.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Fabric028_NormalGL_1024.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Fabric028_Color_1024_t302622.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Fabric028_Color_1024_t302622.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Fabric028_Roughness_1024_m95.png
+    assetPath: Assets/_MercyCreek/Art/Textures/Fabric028_Roughness_1024_m95.png
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Leather030_NormalGL_1024.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Leather030_NormalGL_1024.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Leather030_Color_1024.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Leather030_Color_1024.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Leather030_Roughness_1024.png
+    assetPath: Assets/_MercyCreek/Art/Textures/Leather030_Roughness_1024.png
+  reportItems: []

@@ -9,7 +9,7 @@ namespace MercyCreek
     /// </summary>
     public class MannequinRig : MonoBehaviour
     {
-        public enum Pose { Stand, Wipe, Pour, Lean, Piano, Sit, SitWrite }
+        public enum Pose { Stand, Wipe, Pour, Lean, Piano, Sit, SitWrite, Step, Drive }
 
         public Pose pose = Pose.Stand;
         [Tooltip("髋部前后摆幅（度）。穿长裙 / 围裙的角色要小，见 docs/mannequin_rig.md")]
@@ -109,6 +109,20 @@ namespace MercyCreek
                     Grip("R", 50);
                     G("Chest") += new Vector3(10, 0, 0);
                     G("Head") += new Vector3(24, 0, 0);
+                    break;
+                case Pose.Step:   // 镇民：定格在跨出半步的瞬间（作者写到一半忘了他）
+                    Arms(-4, -14, -4, -14);
+                    G("L_UpperLeg") += new Vector3(-20, 0, 0); G("L_LowerLeg") += new Vector3(8, 0, 0); G("L_Foot") += new Vector3(-4, 0, 0);
+                    G("R_UpperLeg") += new Vector3(14, 0, 0); G("R_LowerLeg") += new Vector3(22, 0, 0); G("R_Foot") += new Vector3(-12, 0, 0);
+                    G("L_UpperArm") += new Vector3(14, 0, 0); G("R_UpperArm") += new Vector3(-16, 0, 0);
+                    hipsGoal.y -= 0.03f;
+                    break;
+                case Pose.Drive:  // 车夫：髋部保持原高度坐在驾座上（docs/horse_rig.md 的车夫姿势），两手在身前握缰绳
+                    G("L_UpperLeg") += new Vector3(-80, 0, -3); G("R_UpperLeg") += new Vector3(-80, 0, 3);
+                    G("L_LowerLeg") += new Vector3(60, 0, 0); G("R_LowerLeg") += new Vector3(60, 0, 0);
+                    Arms(-34, -50, -34, -50);
+                    Grip("L", 70); Grip("R", 70);
+                    G("Chest") += new Vector3(6, 0, 0);
                     break;
             }
 

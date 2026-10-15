@@ -1,6 +1,10 @@
 # 木头人偶骨架（Mannequin rig）
 
-由 `tools/blender/build_mannequin.py` 生成，输出 `Game/Assets/_MercyCreek/Art/Characters/Mannequin_{Gus,Professor,Crane,Nell}.glb`。
+由 `tools/blender/build_mannequin.py` 生成，输出 `Game/Assets/_MercyCreek/Art/Characters/Mannequin_{Gus,Professor,Crane,Nell,Driver,Townsman,Townswoman}.gltf`（+ .bin，贴图在共用的 `Art/Textures/`）。
+街上的群演（`--lineup-town` 出合影 `Reviews/blender/Mannequin_TownLineup.png`）：
+- **Driver**（车夫）：男骨架；带短披肩的长风衣（深褐）、平顶宽檐帽、红领巾、浅黄皮长手套（`Cloth_*_Glove*`，跟着手掌 / 四指两节 / 拇指各自弯）、高筒靴。主要用法是坐在马车 `DriverSeat` 上，坐姿见 `docs/horse_rig.md` 的"驿站马车"一节（UpperLeg X -80、LowerLeg X +60）；坐下时风衣后摆落进座位 / 前舱里看不见，前摆的两片从座位前沿垂下。
+- **Townsman**（镇民男）：男骨架；卷袖工装衬衫、皮背带（`Cloth_Suspender_*`）、帆布裤、短靴、软毡帽。
+- **Townswoman**（镇民女）：**女骨架（同内尔，关节坐标用表里"内尔"那一列）**；长袖连衣长裙（`Cloth_Skirt` 挂在 Hips，同内尔的走路限制）、披肩（`Cloth_Shawl` + 后背三角 `Cloth_Shawl_Point`）、遮阳软帽（`Cloth_Bonnet`）。
 **没有蒙皮、没有骨骼**：每一段身体是一个独立网格对象，层级就是骨架。转一个节点的 `localRotation`，它和它下面的所有段（连同挂在上面的衣服）一起转。
 
 ## 导入约定
@@ -18,7 +22,7 @@
 - 服装是 `Cloth_*` 子节点（例如 `Cloth_Apron`、`Cloth_Coat_Torso`、`Cloth_L_Sleeve_Upper`、`Cloth_BowlerHat`），原点同样在所属关节，localPosition = 0。要换装 / 摘帽子就开关这些节点。
 
 ## 关节世界坐标（Unity，静止姿势，米）
-格斯、教授、克兰共用同一套男性骨架（身高约 1.76 m，不含帽子）；内尔整体缩放 0.943（约 1.66 m），肩略窄、胯略宽。
+格斯、教授、克兰、车夫、镇民男共用同一套男性骨架（身高约 1.76 m，不含帽子）；内尔和镇民女整体缩放 0.943（约 1.66 m），肩略窄、胯略宽。
 "段长" = 从本关节到下一个关节（或到末端）的距离。
 
 | 节点 | 父节点 | 男（格斯 / 教授 / 克兰）关节位置 | 段长 | 内尔关节位置 | 段长 |

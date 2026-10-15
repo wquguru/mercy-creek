@@ -15,7 +15,7 @@ namespace MercyCreek.EditorTools
     ///
     /// Unity -batchmode -projectPath Game -executeMethod MercyCreek.EditorTools.SetupSaloon.Run
     /// </summary>
-    public static class SetupSaloon
+    public static partial class SetupSaloon
     {
         const string Root = "Assets/_MercyCreek";
         const string ScenePath = Root + "/Scenes/Saloon.unity";
@@ -85,7 +85,7 @@ namespace MercyCreek.EditorTools
             RenderSettings.ambientIntensity = 0.7f;
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.Exponential;
-            RenderSettings.fogDensity = 0.018f;
+            RenderSettings.fogDensity = 0.007f;   // 街道上要看得到 60 m 外的画布和教堂
             RenderSettings.fogColor = new Color(0.36f, 0.28f, 0.2f);
             RenderSettings.skybox = SkyboxMaterial();
 
@@ -151,7 +151,15 @@ namespace MercyCreek.EditorTools
 
             // ---------- 外景、钢琴、道具、人偶、剧情 ----------
             var street = PlaceGlb("Art/Street/StreetBackdrop.gltf", "Street Backdrop", Vector3.zero, 180, false);
-            foreach (var r in street.GetComponentsInChildren<MeshRenderer>()) r.receiveGI = ReceiveGI.LightProbes;
+            foreach (var r in street.GetComponentsInChildren<MeshRenderer>())
+            {
+                r.receiveGI = ReceiveGI.LightProbes;
+                // 第 2 稿起能走上街：路面、栈道、房子都要碰撞；远山不用
+                if (!r.name.StartsWith("Hills")) r.gameObject.AddComponent<MeshCollider>().sharedMesh = r.GetComponent<MeshFilter>().sharedMesh;
+            }
+            // 街上的大反射探针（室外）
+            // 盒子不能伸进酒馆 / 电报局（室内会反射到街景，发灰发亮）：z 只到北侧门脸 -0.3
+            ReflectionProbeAt("Reflection Probe Street", new Vector3(0, 2.0f, -7.3f), new Vector3(0, 6f, -7.5f), new Vector3(80f, 16f, 14.4f)).intensity = 0.8f;
 
             var piano = PlaceGlb("Art/Props/PlayerPiano.gltf", "Player Piano", new Vector3(3.2f, 0, 9.65f), 180, true);
             var stool = Find(piano, "PianoStool");
@@ -194,11 +202,12 @@ namespace MercyCreek.EditorTools
             story.notebook = PlaceGlb("Art/Props/Notebook.gltf", "Crane Notebook", new Vector3(-3.0f, tableTop, 1.58f), 180, false);
             InteractBox(story.notebook, "notebook", 0.1f);
 
-            // 前门：挡住，只能看
+            // 前门：第 1 稿挡住，只能看（"街像画在布上"）；第 2 稿起由 Story 关掉
             var door = new GameObject("Front Door");
             door.transform.position = new Vector3(0, 1.35f, 0.1f);
             door.AddComponent<BoxCollider>().size = new Vector3(1.8f, 2.7f, 0.3f);
             door.AddComponent<Interactable>().id = "door";
+            story.frontDoorBlock = door;
 
             // 二楼 4 号房 + 后门：可开的门
             var doorMat = FindMaterial(saloon, "BarBody");
@@ -213,13 +222,19 @@ namespace MercyCreek.EditorTools
             InteractBox(typewriter, "typewriter", 0.25f);
             PointLight("Room 4 Lamp", new Vector3(0.6f, 4.6f, 12.2f), 4f, new Color(1f, 0.7f, 0.42f), true).intensity = 1.2f;
 
-            // 出逃结局的"虚空"：后门外一个没有前墙的大盒子，铺满网格
-            story.voidRoot = MakeVoid();
+            // 乐谱：教授圈出的错音
+            var sheet = new GameObject("Interact sheet");
+            sheet.transform.position = new Vector3(3.2f, 1.45f, 9.55f);
+            var sbox = sheet.AddComponent<BoxCollider>(); sbox.isTrigger = true; sbox.size = new Vector3(0.7f, 0.35f, 0.25f);
+            sheet.AddComponent<Interactable>().id = "sheet";
+
+            // 主街、电报局、教堂墓地、画布与虚空、马车、镇民（SetupTown.cs）
+            BuildTown(story, hud);
 
             // ---------- 评审机位 ----------
             var shots = new GameObject("Review Viewpoints").transform;
             var autoShot = shots.gameObject.AddComponent<AutoShot>();
-            autoShot.loopTimes = new[] { 8f, 75f, 150f };
+            autoShot.loopTimes = new[] { 8f, 75f, 200f };
             shots.gameObject.AddComponent<AutoTest>();
             shots.gameObject.AddComponent<Trailer>();
             autoShot.viewpoints = new[]
@@ -230,7 +245,13 @@ namespace MercyCreek.EditorTools
                 Viewpoint(shots, "shafts", new Vector3(4.3f, 1.7f, 8.0f), new Vector3(-2.5f, 0.6f, 1.5f)),
                 Viewpoint(shots, "corner", new Vector3(-2.2f, 1.45f, 3.6f), new Vector3(-3.0f, 0.95f, 1.2f)),
                 Viewpoint(shots, "piano", new Vector3(1.4f, 1.55f, 7.0f), new Vector3(3.2f, 1.0f, 9.4f)),
-                Viewpoint(shots, "debug_side", new Vector3(-1.0f, 1.3f, 1.3f), new Vector3(-3.0f, 0.8f, 1.4f)),
+                Viewpoint(shots, "street_west", new Vector3(3.0f, 1.65f, -4.0f), new Vector3(-30f, 2.2f, -7.3f)),
+                Viewpoint(shots, "street_east", new Vector3(-4.0f, 1.65f, -6.0f), new Vector3(30f, 4.5f, -7.3f)),
+                Viewpoint(shots, "saloon_front", new Vector3(-3.5f, 1.7f, -11.5f), new Vector3(0.5f, 3.2f, 0f)),
+                Viewpoint(shots, "coach", new Vector3(5.5f, 1.6f, -9.5f), new Vector3(0f, 1.2f, -5.4f)),
+                Viewpoint(shots, "telegraph", new Vector3(-10.0f, 1.6f, 0.8f), new Vector3(-13.5f, 1.0f, 5.5f)),
+                Viewpoint(shots, "graveyard", new Vector3(28.0f, 1.65f, 0.5f), new Vector3(32f, 0.8f, 5f)),
+                Viewpoint(shots, "canvas", new Vector3(-26.0f, 1.65f, -6.5f), new Vector3(-34f, 2.4f, -7.3f)),
             };
 
             // 探针只放在室内（墙内侧），否则墙外被天光照亮的探针会沿墙根漏光
@@ -275,6 +296,9 @@ namespace MercyCreek.EditorTools
             sfx.steps = Enumerable.Range(1, 6).Select(i => Clip($"step_wood_{i:00}")).ToArray();
             sfx.typeKeys = Enumerable.Range(1, 4).Select(i => Clip($"typewriter_key_{i:00}")).ToArray();
             sfx.waltz = new[] { "correct", "C", "A", "G", "E" }.Select(v => Clip("piano_waltz_" + v)).ToArray();
+            sfx.streetAmbience = Clip("amb_street_loop");
+            sfx.stepsDirt = Enumerable.Range(1, 6).Select(i => Clip($"step_dirt_{i:00}")).ToArray();
+            sfx.stepsBoardwalk = Enumerable.Range(1, 6).Select(i => Clip($"step_boardwalk_{i:00}")).ToArray();
 
             sfx.piano = Source3D(sfx.transform, "Piano", new Vector3(3.2f, 1.0f, 9.5f), 3f, 30f);
             sfx.clock = Source3D(sfx.transform, "Clock", new Vector3(-1.6f, 1.6f, 9.6f), 1f, 12f);
@@ -284,7 +308,7 @@ namespace MercyCreek.EditorTools
                 Source3D(sfx.transform, "Wind Front R", new Vector3(4f, 1.8f, 0.1f), 1.5f, 10f),
                 Source3D(sfx.transform, "Wind Door", new Vector3(0f, 1.4f, 0.1f), 1.5f, 10f),
             };
-            foreach (var c in sfx.waltz.Concat(new[] { sfx.ambience, sfx.wind, sfx.voidHum, sfx.endingTheme }))
+            foreach (var c in sfx.waltz.Concat(new[] { sfx.ambience, sfx.wind, sfx.voidHum, sfx.endingTheme, sfx.streetAmbience }))
                 StreamClip(c);
         }
 
@@ -387,6 +411,9 @@ namespace MercyCreek.EditorTools
                 QualitySettings.renderPipeline = rp;
             }
             QualitySettings.SetQualityLevel(QualitySettings.names.Length - 1, true);
+            var rso = new SerializedObject(rp);
+            rso.FindProperty("m_ShadowDistance").floatValue = 70f;   // 街道纵深 70 m
+            rso.ApplyModifiedPropertiesWithoutUndo();
             PlayerSettings.colorSpace = ColorSpace.Linear;
             PlayerSettings.fullScreenMode = FullScreenMode.Windowed;
             PlayerSettings.defaultScreenWidth = 1600;
@@ -639,12 +666,13 @@ namespace MercyCreek.EditorTools
             return d;
         }
 
-        static GameObject MakeVoid()
+        /// <summary>出逃结局的"虚空"：画布后面（x &lt; canvasX）一个没有朝东那面的大盒子，铺满格子纸网格。</summary>
+        static GameObject MakeVoid(float canvasX)
         {
-            const float x0 = 2.4f, x1 = 40f, y0 = 0.01f, y1 = 25f, z0 = 10.25f, z1 = 45f;
+            // 在"东西向"的局部坐标里搭（沿用原来朝 +Z 的盒子），最后整体转 -90°：局部 +Z → 世界 -X
+            const float x0 = -26.4f, x1 = 27f, y0 = 0.01f, y1 = 13.8f, z0 = 0f, z1 = 60f;   // 宽、高都收在画布（y -34..20、高 14）后面
             Vector3[] v =
             {
-                // 地面、顶、后、左、右（没有朝向酒馆的那一面）
                 new Vector3(x0, y0, z0), new Vector3(x1, y0, z0), new Vector3(x1, y0, z1), new Vector3(x0, y0, z1),
                 new Vector3(x0, y1, z0), new Vector3(x1, y1, z0), new Vector3(x1, y1, z1), new Vector3(x0, y1, z1),
             };
@@ -658,20 +686,14 @@ namespace MercyCreek.EditorTools
             }
             Quad(0, 1, 2, 3, Vector3.up); Quad(4, 7, 6, 5, Vector3.down);
             Quad(3, 2, 6, 7, Vector3.back); Quad(0, 3, 7, 4, Vector3.right); Quad(1, 5, 6, 2, Vector3.left);
-            // 朝酒馆的那一面：酒馆后墙（x ≤ 7.2、高 6.6）以外的部分也要封上，否则看得到外面的沙漠
-            int n0 = v.Length;
-            v = v.Concat(new[]
-            {
-                new Vector3(7.2f, y0, z0), new Vector3(7.2f, y1, z0), new Vector3(x0, 6.6f, z0), new Vector3(7.2f, 6.6f, z0),
-            }).ToArray();
-            Quad(n0, 1, 5, n0 + 1, Vector3.forward);            // x 7.2..40 整面
-            Quad(n0 + 2, n0 + 3, n0 + 1, 4, Vector3.forward);   // x 2.4..7.2，屋顶以上
+            // 朝东（朝街）的那一面不封：画布挡着，只有撕开的口子看得进来
             mesh.SetVertices(verts); mesh.SetNormals(normals); mesh.SetTriangles(tris, 0); mesh.RecalculateBounds();
             const string meshPath = Root + "/Materials/VoidBox.asset";
             AssetDatabase.DeleteAsset(meshPath);
             AssetDatabase.CreateAsset(mesh, meshPath);
 
             var go = new GameObject("Void", typeof(MeshFilter), typeof(MeshRenderer));
+            go.transform.SetPositionAndRotation(new Vector3(canvasX, 0, -7.3f), Quaternion.Euler(0, -90, 0));
             go.GetComponent<MeshFilter>().sharedMesh = mesh;
             const string matPath = Root + "/Materials/VoidGrid.mat";
             var mat = AssetDatabase.LoadAssetAtPath<Material>(matPath);

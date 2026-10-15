@@ -19,10 +19,17 @@ AC_MATERIALS = ["WoodFloor041", "WoodFloor043", "Planks037A", "Planks021", "Wood
                 "Wood050", "Wood092", "Wood066", "Wood027", "Fabric032", "Fabric061", "Fabric063", "Fabric066",
                 "Fabric040", "Fabric022", "Fabric026", "Fabric028", "Leather037", "Leather030", "Leather026",
                 "Metal027", "Paper005", "Ground054", "Ground080", "Ground033", "WoodSiding009", "WoodSiding002",
-                "WoodSiding004", "WoodSiding010", "PaintedWood009C", "PaintedWood008B", "Planks012"]
+                "WoodSiding004", "WoodSiding010", "PaintedWood009C", "PaintedWood008B", "Planks012",
+                # 街道两头：教堂地基、枯树（tools/blender/build_edges.py）
+                "Rock030", "Bark007"]
 # SIL OFL 字体：只用来把招牌文字栅格化成贴图（字体文件本身不进工程）
 FONTS = {"Rye-Regular.ttf": "https://github.com/google/fonts/raw/main/ofl/rye/Rye-Regular.ttf",
-         "Rye-OFL.txt": "https://github.com/google/fonts/raw/main/ofl/rye/OFL.txt"}
+         "Rye-OFL.txt": "https://github.com/google/fonts/raw/main/ofl/rye/OFL.txt",
+         # 墓碑刻字 / 手写"待写"纸条（tools/gen_edge_textures.py）
+         "IMFeENsc28P.ttf": "https://github.com/google/fonts/raw/main/ofl/imfellenglishsc/IMFeENsc28P.ttf",
+         "IMFell-OFL.txt": "https://github.com/google/fonts/raw/main/ofl/imfellenglishsc/OFL.txt",
+         "Zeyada.ttf": "https://github.com/google/fonts/raw/main/ofl/zeyada/Zeyada.ttf",
+         "Zeyada-OFL.txt": "https://github.com/google/fonts/raw/main/ofl/zeyada/OFL.txt"}
 
 UA = {"User-Agent": "mercy-creek-asset-fetch/1.0"}
 

@@ -19,15 +19,21 @@ namespace MercyCreek
             public int loop;
         }
 
-        // 循环时间点参考 Story：3s 钢琴、27s 错音、60s 陌生人进门、85s 走去窗边、158s 上楼、171s 变红、180s 重置
+        // 循环时间点参考 Story（240 秒一轮）：3s 钢琴、27s 错音、~44s 马车从画布驶出、65s 克兰进门（第 4 轮 50s）、
+        // 77s 要酒、92s 坐下写字、180s 上楼、228s 变红、240s 重置
         static readonly Shot[] Shots =
         {
             new() { loop = 1, loopTime = 6f,   seconds = 5f,   fromPos = new(-0.4f, 1.75f, 1.0f), toPos = new(0.3f, 1.9f, 3.4f), fromLook = new(1.2f, 1.5f, 9f), toLook = new(1.8f, 1.4f, 9f) },
             new() { loop = 1, loopTime = 24.5f, seconds = 4.5f, fromPos = new(2.3f, 1.35f, 8.2f), toPos = new(2.55f, 1.3f, 8.55f), fromLook = new(3.2f, 0.95f, 9.4f), toLook = new(3.25f, 0.95f, 9.45f) },
-            new() { loop = 4, loopTime = 45.5f, seconds = 5f,   fromPos = new(-4.2f, 1.5f, 6.4f), toPos = new(-4.0f, 1.5f, 6.0f), fromLook = new(0f, 1.4f, 0.5f), toLook = new(-1.8f, 1.3f, 2.4f) },
+            // 马车从画布里驶出（快进会让马车瞬移，所以从它出发前 1 秒开拍）
+            new() { loop = 2, loopTime = 43.5f, seconds = 6.5f, fromPos = new(-22.5f, 1.5f, -1.6f), toPos = new(-23.5f, 1.45f, -2.2f), fromLook = new(-33f, 1.8f, -5.4f), toLook = new(-29f, 1.5f, -5.4f) },
             new() { loop = 2, loopTime = 110f, seconds = 5f,   fromPos = new(-1.5f, 1.3f, 3.0f), toPos = new(-2.0f, 1.25f, 2.7f), fromLook = new(-3.0f, 1.0f, 1.2f), toLook = new(-3.0f, 0.95f, 1.15f) },
-            new() { loop = 1, loopTime = 72f, seconds = 5f,    fromPos = new(-3.0f, 1.5f, 5.2f), toPos = new(-3.3f, 1.45f, 4.9f), fromLook = new(-5.4f, 1.2f, 4.0f), toLook = new(-5.5f, 1.15f, 4.1f) },
-            new() { loop = 2, loopTime = 176.5f, seconds = 5.5f, fromPos = new(0.3f, 1.7f, 1.2f), toPos = new(0.3f, 1.75f, 2.2f), fromLook = new(0.6f, 1.6f, 9f), toLook = new(0.6f, 1.6f, 9f) },
+            // 玛莎的墓碑，旁边那块空白的
+            new() { loop = 3, loopTime = 120f, seconds = 5f,  fromPos = new(31.0f, 1.55f, 1.6f), toPos = new(32.2f, 1.3f, 3.3f), fromLook = new(32.4f, 0.6f, 5f), toLook = new(32.6f, 0.55f, 5f) },
+            new() { loop = 1, loopTime = 79f, seconds = 5f,    fromPos = new(-3.0f, 1.5f, 5.2f), toPos = new(-3.3f, 1.45f, 4.9f), fromLook = new(-5.4f, 1.2f, 4.0f), toLook = new(-5.5f, 1.15f, 4.1f) },
+            // 街道尽头的画布
+            new() { loop = 3, loopTime = 140f, seconds = 5f,  fromPos = new(-22f, 1.7f, -6.6f), toPos = new(-29.5f, 1.7f, -7.1f), fromLook = new(-34f, 2.6f, -7.3f), toLook = new(-34f, 2.2f, -7.3f) },
+            new() { loop = 2, loopTime = 236.5f, seconds = 5.5f, fromPos = new(0.3f, 1.7f, 1.2f), toPos = new(0.3f, 1.75f, 2.2f), fromLook = new(0.6f, 1.6f, 9f), toLook = new(0.6f, 1.6f, 9f) },
         };
 
         IEnumerator Start()

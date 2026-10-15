@@ -1,8 +1,9 @@
 """音频评审：给每个 WAV 出"波形 + 频谱"图到 Reviews/audio/，用 ffmpeg astats 量峰值 / RMS，
 检查循环接缝，并核对华尔兹 5 个版本只在错音处不同。
 
-用法：.venv/bin/python tools/audio/review_audio.py
+用法：.venv/bin/python tools/audio/review_audio.py [--only 名字前缀 ...]
 """
+import argparse
 import re
 import subprocess
 import sys
@@ -19,7 +20,8 @@ ROOT = HERE.parent.parent
 AUDIO = ROOT / 'Game' / 'Assets' / '_MercyCreek' / 'Audio'
 REV = ROOT / 'Reviews' / 'audio'
 SR = 48000
-LOOPS = ['amb_saloon_loop', 'amb_wind_loop', 'void_hum_loop', 'piano_waltz_correct', 'piano_waltz_E']
+LOOPS = ['amb_saloon_loop', 'amb_wind_loop', 'void_hum_loop', 'piano_waltz_correct', 'piano_waltz_E',
+         'hooves_walk_loop', 'coach_roll_loop', 'telegraph_loop', 'amb_street_loop']
 
 
 def read(p):
@@ -77,8 +79,12 @@ def seam(name, x):
 
 
 def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--only', nargs='*', default=None, help='只评审名字以这些前缀开头的文件')
+    a = ap.parse_args()
+    want = (lambda n: True) if not a.only else (lambda n: any(n.startswith(p) for p in a.only))
     REV.mkdir(parents=True, exist_ok=True)
-    files = sorted(AUDIO.glob('*.wav'))
+    files = [f for f in sorted(AUDIO.glob('*.wav')) if want(f.stem)]
     print(f'{"file":26s} {"dur":>7s} {"ch":>2s} {"peak":>8s} {"rms":>8s}')
     for f in files:
         x = read(f)
@@ -88,7 +94,10 @@ def main():
         picture(f, REV / f'{f.stem}.png', f.stem)
     print('loop seams:')
     for n in LOOPS:
-        seam(n, read(AUDIO / f'{n}.wav'))
+        if want(n):
+            seam(n, read(AUDIO / f'{n}.wav'))
+    if not want('piano_waltz'):
+        return
     print('waltz variants (first differing sample vs correct):')
     ref = read(AUDIO / 'piano_waltz_correct.wav')
     for pc in piano.WRONG:

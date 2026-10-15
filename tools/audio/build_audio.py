@@ -16,6 +16,7 @@ import numpy as np  # noqa: E402
 import dsp  # noqa: E402
 import piano  # noqa: E402
 import sfx  # noqa: E402
+import town  # noqa: E402
 
 ROOT = HERE.parent.parent
 OUT = ROOT / 'Game' / 'Assets' / '_MercyCreek' / 'Audio'
@@ -50,6 +51,21 @@ JOBS = [
     ('typewriter_return', sfx.typewriter_return, 'peak', -5.0),
     ('void_hum_loop', sfx.void_hum_loop, 'rms', -30.0),
     ('ending_theme', piano.render_ending, 'peak', -3.0),
+    # ---- 主街（第 2 稿起），见 docs/audio_town.md
+    ('hooves_walk_loop', town.hooves_walk_loop, 'rms', -26.0),
+    ('coach_roll_loop', town.coach_roll_loop, 'rms', -26.0),
+    ('coach_stop', town.coach_stop, 'peak', -3.0),
+    ('horse_snort_01', lambda: town.horse_snort(1), 'peak', -5.0),
+    ('horse_snort_02', lambda: town.horse_snort(2), 'peak', -5.0),
+    ('horse_stamp', town.horse_stamp, 'peak', -4.0),
+    ('telegraph_loop', town.telegraph_loop, 'peak', -6.0),
+    ('church_bell', town.church_bell, 'peak', -3.0),
+    ('church_bell_three', town.church_bell_three, 'peak', -4.0),
+    ('amb_street_loop', town.amb_street_loop, 'rms', -30.0),
+    *[(f'step_dirt_{i:02d}', (lambda i=i: town.step_dirt(i)), 'peak', -6.0) for i in range(1, 7)],
+    *[(f'step_boardwalk_{i:02d}', (lambda i=i: town.step_boardwalk(i)), 'peak', -6.0) for i in range(1, 7)],
+    ('canvas_tear', town.canvas_tear, 'peak', -2.0),
+    ('gate_creak', town.gate_creak, 'peak', -3.0),
 ]
 
 WALTZ = {'piano_waltz_correct': piano.INTENDED,

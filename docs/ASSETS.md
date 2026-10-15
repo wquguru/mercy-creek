@@ -33,6 +33,7 @@
 |---|---|
 | 天空 HDRI（午后 / 黄昏） | PH HDRIs |
 | 窗外大街远景 | BL：`StreetBackdrop.glb`，见下方「脚本生成的模型」 |
+| 北侧一排（酒馆外壳、电报局室内、殡仪馆 / 治安官 / 澡堂门脸） | BL：`Town.gltf`，见下方「脚本生成的模型」 |
 
 ## 登记
 每个落地的资产在下表记录：
@@ -104,6 +105,10 @@
 | PaintedWood008B | https://ambientcg.com/view?id=PaintedWood008B | CC0 | 2026-10-15 |
 | Planks012 | https://ambientcg.com/view?id=Planks012 | CC0 | 2026-10-15 |
 | Rye-Regular（字体） | https://fonts.google.com/specimen/Rye （github.com/google/fonts/ofl/rye） | SIL OFL 1.1 | 2026-10-15 |
+| Rock030 | https://ambientcg.com/view?id=Rock030 | CC0 | 2026-10-15 |
+| Bark007 | https://ambientcg.com/view?id=Bark007 | CC0 | 2026-10-15 |
+| IM Fell English SC（字体，墓碑刻字） | https://fonts.google.com/specimen/IM+Fell+English+SC （github.com/google/fonts/ofl/imfellenglishsc） | SIL OFL 1.1 | 2026-10-15 |
+| Zeyada（字体，手写"待写"纸条） | https://fonts.google.com/specimen/Zeyada （github.com/google/fonts/ofl/zeyada） | SIL OFL 1.1 | 2026-10-15 |
 
 ## 音频（程序合成）
 全部由 `tools/audio/` 里的 Python（numpy + scipy）从零合成：没有下载的采样、没有音色库。`tools/build_audio.sh` 用固定随机种子重建，结果逐字节相同；`tools/build_audio.sh --review` 另出波形 / 频谱图到 `Reviews/audio/` 并检查电平、循环接缝和华尔兹错音对齐。输出 48 kHz / 16-bit 到 `Game/Assets/_MercyCreek/Audio/`。
@@ -125,6 +130,17 @@
 | void_hum_loop.wav | tools/audio/sfx.py `void_hum_loop` | 自制 | 单声道 20 s 无缝循环；出逃结局"未渲染的虚空"低频嗡 + 空气 |
 | ending_theme.wav | tools/audio/piano.py `render_ending` | 自制（原创曲） | 立体声约 45 s，D# 小调慢板钢琴 + 柔和铺底，结尾淡出 |
 | piano_waltz_correct / _C / _A / _G / _E.wav | tools/audio/piano.py `render_waltz` | 自制（原创曲） | 《Mercy Creek 华尔兹》，合成老式走音立式钢琴，57.857 s 无缝循环；错音在 24.11 s，详见 `docs/audio_waltz.md` |
+| hooves_walk_loop.wav | tools/audio/town.py `hooves_walk_loop` | 自制 | 单声道 8 s 无缝循环；两匹马四拍慢步走在土路上 + 挽具叮当 / 皮带咯吱；RMS -26 dBFS。主街音效详见 `docs/audio_town.md` |
+| coach_roll_loop.wav | tools/audio/town.py `coach_roll_loop` | 自制 | 单声道 8 s 无缝循环；驿站马车木轮隆隆 + 铁箍碾碎石 + 车厢共振 + 吊带咯吱；RMS -26 dBFS |
+| coach_stop.wav | tools/audio/town.py `coach_stop` | 自制 | 单声道 3.4 s；马车减速停下：刹车棘轮 + 刹车吱声 + 车身前冲荡回 + 挽具叮当（无人声） |
+| horse_snort_01 / _02.wav, horse_stamp.wav | tools/audio/town.py `horse_snort` / `horse_stamp` | 自制 | 单声道；马打响鼻 / 长长"噗噜噜" / 跺蹄 + 叮当 |
+| telegraph_loop.wav | tools/audio/town.py `telegraph_loop` | 自制 | 单声道 12 s 无缝循环；电报音响器用美式莫尔斯码发"DRAFT VOID STOP REWRITE STOP"，后接约 2.5 s 静默 |
+| church_bell.wav / church_bell_three.wav | tools/audio/town.py `church_bell` / `church_bell_three` | 自制 | 小青铜钟一声（单声道 9.5 s，nominal D#5，hum/prime/小三度 tierce/quint/nominal 分音）/ 远处三声（立体声 14 s，相隔 3.2 s） |
+| amb_street_loop.wav | tools/audio/town.py `amb_street_loop` | 自制 | 立体声 36 s 无缝循环；午后主街：干燥阵风 + 扬沙 + 远处吱呀 + 很淡的鸟叫虫鸣；RMS -30 dBFS |
+| step_dirt_01..06.wav | tools/audio/town.py `step_dirt` | 自制 | 女式皮靴踩压实土路 + 碎石；峰值 -6 dBFS |
+| step_boardwalk_01..06.wav | tools/audio/town.py `step_boardwalk` | 自制 | 户外架空木栈道（比室内 step_wood 更低更空、有松板磕碰）；峰值 -6 dBFS |
+| canvas_tear.wav | tools/audio/town.py `canvas_tear` | 自制 | 单声道 2.7 s；撕开巨大的厚帆布，断开后帆布扑腾 |
+| gate_creak.wav | tools/audio/town.py `gate_creak` | 自制 | 单声道 2.1 s；墓地木栅栏门：门闩 + 生锈合页吱嘎 + 碰到篱笆桩 |
 
 ## 脚本生成的模型（BL）
 全部由 Blender 脚本从基本体程序化建模，贴图只用上面登记的 ambientCG CC0 材质（派生到 `art/source/_derived/`，缩到 1K，人偶木纹 2K）和 Pillow 生成的文字贴图。共用工具 `tools/blender/mc_common.py`。产物不进 Git，由 `tools/bootstrap.sh` 重建。
@@ -136,6 +152,11 @@
 | Art/Characters/Mannequin_Professor.glb | tools/blender/build_mannequin.py | Wood050、Wood092、Fabric032/026/061/063、Leather026 | 13.6k |
 | Art/Characters/Mannequin_Crane.glb | tools/blender/build_mannequin.py | Wood050、Wood092、Fabric066/063/028/032、Leather030/037、Ground080 | 14.7k |
 | Art/Characters/Mannequin_Nell.glb | tools/blender/build_mannequin.py | Wood050、Wood092、Fabric032/022/063、Leather026 | 11.9k |
+| Art/Characters/Mannequin_Driver.gltf（车夫：带披肩的长风衣、宽檐帽、领巾、皮手套） | tools/blender/build_mannequin.py | Wood050、Wood092、Fabric066/063/028/032/061、Leather030/037 | 17.0k |
+| Art/Characters/Mannequin_Townsman.gltf（镇民男：工装衬衫、背带、软毡帽） | tools/blender/build_mannequin.py | Wood050、Wood092、Fabric032/066/028、Leather030/026 | 13.5k |
+| Art/Characters/Mannequin_Townswoman.gltf（镇民女：女骨架，长裙、披肩、遮阳软帽） | tools/blender/build_mannequin.py | Wood050、Wood092、Fabric063/061/032、Leather026 | 12.3k |
+| Art/Characters/Horse.gltf / Horse_B.gltf（木头人偶马 + 挽具 Tack_*；B 只是木色深一档。骨架见 docs/horse_rig.md） | tools/blender/build_horse.py | Wood050、Wood092、Leather030/037、Metal027 | 17.2k / 匹 |
+| Art/Vehicles/Stagecoach.gltf（康科德式驿站马车：Chassis → Wheel_FL/FR/RL/RR、Body → Door_L/Door_R、DriverSeat；空节点 PassengerExit_L、Hitch_L/R。见 docs/horse_rig.md） | tools/blender/build_coach.py | PaintedWood009C、Leather030/037、Metal027、Wood066、Fabric066；车身"MERCY CREEK"金字是 Rye（SIL OFL）字形转成的网格 | 33.1k |
 | Art/Props/Typewriter.glb（含 Paper） | tools/blender/build_props.py | Metal027、Wood027；打字纸 / 键帽贴图 tools/gen_prop_textures.py | 3.0k |
 | Art/Props/Desk.glb（Desk + Chair） | tools/blender/build_props.py | Wood066、Wood027、Leather037 | 2.7k |
 | Art/Props/Notebook.glb | tools/blender/build_props.py | Leather030；内页 tools/gen_prop_textures.py | 0.2k |
@@ -143,5 +164,7 @@
 | Art/Props/Letter.glb | tools/blender/build_props.py | Paper005；信纸 tools/gen_prop_textures.py | 0.1k |
 | Art/Props/WhiskeyGlass.glb（含 Whiskey） | tools/blender/build_props.py | 无贴图 | 1.2k |
 | Art/Street/StreetBackdrop.glb | tools/blender/build_street.py | Ground054/080/033、WoodSiding002/004/009/010、PaintedWood008B/009C、Planks012、Wood066、Fabric040；招牌 tools/gen_street_signs.py | 22.8k |
+| Art/Town/Town.gltf（根节点 Town：酒馆外壳 Saloon_Cladding/FalseFront/Roof/AwningPosts；电报局 Telegraph_Shell/Door/Counter/Desk/Machine/Stove/Bench、空节点 Telegraph_Tape / Telegraph_LampPos；Undertaker、Sheriff、Baths 及门上纸条 TBD_*；AlleyFences、Boardwalk_North、Town_Props、TelegraphPole；`NoCol_` 前缀 = 不加碰撞体） | tools/blender/build_town.py | WoodSiding002/004/009/010/013、PaintedWood009C、Planks012/021/037A、WoodFloor041/043、Wood066、Fabric040、Paper005；招牌 / 手写纸条（Zeyada，SIL OFL）/ 告示 / 钟面 tools/gen_street_signs.py | 20.1k |
+| Art/Town/TownEdges.gltf（根节点 TownEdges：Church → Church_Building、Church_Bell + 空节点 Church_BellPos、门上纸条 TBD_Church、NoCol_Grass_Church；Graveyard → Graveyard_Ground/Path/Fence/DeadTree/Shovel、Graveyard_Gate（原点在合页轴）及其子物体 TBD_Graveyard、Grave_01..12、Grave_Martha、Grave_Blank、Grave_Blank_Mound、NoCol_Grass_Graveyard；WorldCanvas → Canvas_Main、Canvas_Flap（原点在南侧竖边）、空节点 Canvas_Pos、Canvas_Frame、Canvas_Sandbags、NoCol_Canvas_Ropes。Church_Bell / TBD_* / Canvas_Flap 也不该加碰撞体） | tools/blender/build_edges.py（`--paint` 在 Blender 里渲染"往西延伸的路"再由 tools/gen_edge_textures.py 加工成手绘布景，劈成南北两张 2048²） | WoodSiding009/011、PaintedWood009C、Planks012、Wood066、Rock030、Bark007、Ground054/080/033；墓碑刻字图集 / 玛莎墓碑 / 纸条 / 干草卡片 / 画布织纹由 tools/gen_edge_textures.py 生成（IM Fell English SC、Zeyada，SIL OFL）；画布底稿天空光照用 PH goegap_road | 37k |
 
 文字贴图（日历、信、笔记本、打字纸、招牌）用 Rye（SIL OFL）栅格化；字体文件只在 `art/source/fonts/`，不进工程、不随构建分发。镜子沿用 Poly Haven `ornate_mirror_01`，没有另做。

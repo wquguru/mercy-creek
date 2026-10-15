@@ -17,7 +17,10 @@ RENDER = "--no-render" not in A
 SAMPLES = int(A[A.index("--samples") + 1]) if "--samples" in A else 48
 ONLY = A[A.index("--only") + 1] if "--only" in A else None
 LINEUP = "--lineup" in A
-VARIANTS = ["Gus", "Professor", "Crane", "Nell"]
+LINEUP_TOWN = "--lineup-town" in A
+VARIANTS = ["Gus", "Professor", "Crane", "Nell", "Driver", "Townsman", "Townswoman"]
+TOWN = ["Driver", "Townsman", "Townswoman"]   # 街上的群演（--lineup-town 出合影）
+FEMALE = ("Nell", "Townswoman")               # 用女性骨架（整体 0.943、肩窄胯宽）
 ABD = math.radians(8.0)  # 手臂静止外展角
 
 
@@ -103,7 +106,7 @@ class Mannequin:
     def __init__(self, name, offset=(0, 0, 0), coll=None):
         self.name = name
         self.coll = coll or bpy.context.scene.collection
-        self.nell = name == "Nell"
+        self.nell = name in FEMALE
         s = self.s = 0.943 if self.nell else 1.0
         self.off = Vector(offset)
         # ---------- 材质 ----------
@@ -479,6 +482,204 @@ class Mannequin:
                     hair, seg=20, xf=xf, arc=(1.25, 2 * math.pi - 1.25), cap=False)
         self.cloth("Head", "Cloth_HairBun", bun, [hair])
 
+    # ---------- 镇上群演（车夫 / 镇民） ----------
+    def patch(self, segname, cname, mat, z0, z1, d, a_c, halfang, nz=6, na=6, thick=0.004):
+        """贴着统一躯干外形的一块布（领巾三角、披肩后摆）：世界高度 z0..z1，中心角 a_c（0 = 正前，π = 正后），
+        halfang(z) = 该高度的半角宽度。外 / 内两层 + 封边，所以从哪边看都有面。"""
+        s = self.s
+        sg = self.segs[segname]; pz = sg["pivot"].z
+        env = [(e[0], e[1], e[2], 0, e[3]) for e in self.TORSO]
+        def build(p, xf):
+            bm, uvl = p.bm, p.uv
+            tile = mat.get("tile", 1.0)
+            layers = []
+            for dd in (d, d - thick):
+                rows = []
+                for i in range(nz + 1):
+                    z = z0 + (z1 - z0) * i / nz
+                    _, rx, ry, ox, oy = interp(env, z)
+                    h = halfang(z)
+                    rows.append([bm.verts.new(xf @ Vector(((rx + dd) * math.sin(a_c + h * (2 * j / na - 1)),
+                                                           oy - (ry + dd) * math.cos(a_c + h * (2 * j / na - 1)), z - pz)))
+                                 for j in range(na + 1)])
+                layers.append(rows)
+            faces = []
+            def q(vs, flip):
+                f = bm.faces.new(list(reversed(vs)) if flip else vs)
+                for lp in f.loops:
+                    co = lp.vert.co; lp[uvl].uv = (co.x / tile + co.y / tile, co.z / tile)
+                faces.append(f)
+            O, I = layers
+            for i in range(nz):
+                for j in range(na):
+                    q([O[i][j], O[i][j + 1], O[i + 1][j + 1], O[i + 1][j]], a_c > 1.0)
+                    q([I[i][j], I[i][j + 1], I[i + 1][j + 1], I[i + 1][j]], a_c <= 1.0)
+            for i in range(nz):  # 两侧封边
+                for j, fl in ((0, False), (na, True)):
+                    q([O[i][j], O[i + 1][j], I[i + 1][j], I[i][j]], fl ^ (a_c > 1.0))
+            for i, fl in ((0, True), (nz, False)):
+                for j in range(na):
+                    q([O[i][j], O[i][j + 1], I[i][j + 1], I[i][j]], fl ^ (a_c > 1.0))
+            p._take(faces, mat, True)
+        return self.cloth(segname, cname, build, [mat])
+
+    def gloves(self, mat):
+        """皮手套：手掌、四指两节、拇指各一层壳，跟着各自的关节动；腕口加一圈短护腕。"""
+        s = self.s
+        for sd in "LR":
+            self.shell(f"{sd}_Hand", f"Cloth_{sd}_Glove", mat, -0.004 * s, 0.098 * s, 0.0035, seg=12, minr=0.024 * s)
+            self.shell(f"{sd}_LowerArm", f"Cloth_{sd}_GloveCuff", mat, 0.19 * s, 0.243 * s, 0.012, seg=14,
+                       flare=lambda t: max(0.0, t - 0.19 * s) * 0.25)
+            self.shell(f"{sd}_Thumb", f"Cloth_{sd}_GloveThumb", mat, -0.004 * s, 0.061 * s, 0.0035, seg=10, minr=0.011 * s)
+            lens = [(0.03, 0.036), (0.01, 0.04), (-0.01, 0.037), (-0.03, 0.029)]
+            def fg(p, xf, tip):
+                for yo, tl in lens:
+                    L = (tl if tip else 0.042) * s; r = ((0.0078 if tip else 0.0088) * s * (0.9 if yo < -0.02 else 1.0)) + 0.0032
+                    prof = [(-0.004 * s, 0, 0), (-0.002 * s, r * 0.75, r * 0.75), (0.004 * s, r, r), (L - 0.003 * s, r * 0.95, r * 0.95),
+                            (L + 0.0005, r * 0.62, r * 0.62), (L + 0.0025, 0, 0)]
+                    p.lathe(prof, mat, seg=8, xf=xf @ T(0, yo * s, 0), swap_uv=True)
+            self.cloth(f"{sd}_Fingers", f"Cloth_{sd}_GloveFingers", lambda p, xf: fg(p, xf, False), [mat])
+            self.cloth(f"{sd}_FingersTip", f"Cloth_{sd}_GloveTips", lambda p, xf: fg(p, xf, True), [mat])
+
+    def neckerchief(self, mat):
+        s = self.s
+        self.cloth("Neck", "Cloth_Neckerchief", lambda p, xf: p.lathe(
+            [(-0.006 * s, 0.052 * s, 0.056 * s, 0, -0.006), (0.0, 0.06 * s, 0.065 * s, 0, -0.008), (0.03 * s, 0.059 * s, 0.064 * s, 0, -0.008),
+             (0.05 * s, 0.054 * s, 0.058 * s, 0, -0.006), (0.054 * s, 0.047 * s, 0.05 * s, 0, -0.005)], mat, seg=18, xf=xf, cap=False), [mat])
+        # 胸前的三角垂角 + 结
+        self.patch("Chest", "Cloth_Neckerchief_Tip", mat, 1.33 * s, 1.47 * s, 0.024, 0.0,
+                   lambda z: 0.02 + 0.3 * max(0.0, (z - 1.33 * s)) / (0.14 * s), nz=5, na=4)
+        self.cloth("Chest", "Cloth_Neckerchief_Knot", lambda p, xf: p.sphere(
+            0.018 * s, mat, xf=xf @ T(0, -0.098 * s, 0.235 * s), seg=10, rings=6, sx=1.25, sy=0.7), [mat])
+
+    def dress_Driver(self):
+        """车夫：长风衣（无披肩，翻立领）、宽檐平顶帽、红领巾、皮手套、高筒靴。主要用法是坐在车夫座上。"""
+        s = self.s
+        duster = mc.pbr("DriverDuster", "Fabric066", tile=0.3, tint=(0.4, 0.33, 0.26), normal=0.8)
+        pants = mc.pbr("DriverTrousers", "Fabric063", tile=0.25, tint=(0.5, 0.47, 0.43), normal=0.8)
+        felt = mc.pbr("DriverHatFelt", "Fabric028", tile=0.2, tint=(0.3, 0.26, 0.22), rough_mul=0.95, normal=0.5)
+        band = mc.pbr("HatBand", "Leather030", tile=0.1)
+        boot = mc.pbr("DriverBoot", "Leather037", tile=0.2, tint=(0.42, 0.36, 0.3), rough_mul=1.3, rough_add=0.1)
+        shirt = mc.pbr("DriverShirt", "Fabric032", tile=0.25, tint=(0.7, 0.66, 0.6), normal=0.6)
+        vest = mc.pbr("DriverVest", "Fabric061", tile=0.2, tint=(0.36, 0.34, 0.32), normal=0.8)
+        glove = mc.pbr("GloveLeather", "Leather037", tile=0.12, tint=(0.78, 0.62, 0.46), rough_mul=0.9)
+        kerchief = mc.pbr("KerchiefRed", "Fabric032", tile=0.15, tint=(0.55, 0.12, 0.08), normal=0.5)
+        self.shirt(shirt)
+        self.vest(vest, mc.flat("DarkButton", (0.05, 0.04, 0.03), rough=0.4), gap=0.36, d=0.018)
+        self.trousers(pants, None, shin_end=0.2)
+        for sd in "LR":
+            self.shoe(sd, boot, boot_top=0.1)
+        self.neckerchief(kerchief)
+        self.torso("Chest", "Cloth_Coat_Torso", duster, 1.16 * s, 1.47 * s, 0.032, seg=24, hem_top=False,
+                   gap=lambda z: 0.3 + 0.38 * max(0.0, (z - 1.3 * s) / (0.17 * s)))
+        self.torso("Spine", "Cloth_Coat_Waist", duster, 1.0 * s, 1.25 * s, 0.036, seg=24, gap=lambda z: 0.28)
+        def collar(p, xf):  # 车夫披肩（短，到上臂中部）+ 翻领
+            cz = self.segs["Chest"]["pivot"].z
+            cp = [(1.29 * s - cz, 0.272 * s, 0.19 * s, 0, 0.004), (1.302 * s - cz, 0.275 * s, 0.193 * s, 0, 0.004), (1.36 * s - cz, 0.255 * s, 0.165 * s, 0, 0.0),
+                  (1.41 * s - cz, 0.228 * s, 0.14 * s, 0, -0.004), (1.45 * s - cz, 0.19 * s, 0.116 * s, 0, -0.004), (1.48 * s - cz, 0.122 * s, 0.086 * s),
+                  (1.495 * s - cz, 0.074 * s, 0.066 * s)]
+            vlathe(p, cp, [0.36, 0.36, 0.4, 0.46, 0.55, 0.68, 0.8], duster, 26, xf)
+            p.lathe([(0.225 * s, 0.072 * s, 0.07 * s, 0, 0.006), (0.29 * s, 0.074 * s, 0.076 * s, 0, 0.012),
+                     (0.296 * s, 0.084 * s, 0.088 * s, 0, 0.012), (0.255 * s, 0.11 * s, 0.112 * s, 0, 0.012), (0.24 * s, 0.112 * s, 0.11 * s, 0, 0.01)],
+                    duster, seg=20, xf=xf, arc=(0.62, 2 * math.pi - 0.62), cap=False)
+        self.cloth("Chest", "Cloth_Coat_Collar", collar, [duster])
+        for sd in "LR":
+            self.shell(f"{sd}_UpperArm", f"Cloth_Coat_{sd}_UpperSleeve", duster, -0.043 * s, 0.31 * s, 0.024, seg=16, hem=True,
+                       prof=self.cap_prof(sd), minr=0.04 * s)
+            self.shell(f"{sd}_LowerArm", f"Cloth_Coat_{sd}_LowerSleeve", duster, -0.035 * s, 0.22 * s, 0.024, seg=14, minr=0.038 * s,
+                       flare=lambda t: max(0.0, t - 0.15 * s) * 0.15)
+        def tail(p, xf):  # 下摆：前面开口；坐下时大腿从开口伸出，后片落在座位里
+            p.lathe([(-0.7 * s, 0.3 * s, 0.26 * s, 0, 0.03 * s), (-0.45 * s, 0.25 * s, 0.205 * s, 0, 0.02 * s), (-0.2 * s, 0.2 * s, 0.145 * s, 0, 0.01 * s),
+                     (-0.06 * s, 0.186 * s, 0.13 * s, 0, 0.008 * s), (0.08 * s, 0.17 * s, 0.12 * s, 0, 0.004 * s)],
+                    duster, seg=28, xf=xf, arc=(0.66, 2 * math.pi - 0.66), cap=False)
+        self.cloth("Hips", "Cloth_Coat_Tail", tail, [duster])
+        self.gloves(glove)
+        def hat(p, xf):  # 平顶宽檐（plainsman）
+            p.lathe([(0.13 * s, 0.089 * s, 0.104 * s, 0, -0.004), (0.2 * s, 0.087 * s, 0.1 * s, 0, -0.004), (0.24 * s, 0.083 * s, 0.096 * s, 0, -0.004),
+                     (0.248 * s, 0.07 * s, 0.082 * s, 0, -0.004), (0.25 * s, 0, 0, 0, -0.004)], felt, seg=28, xf=xf)
+            self.hat_brim(p, xf, felt, 0.13 * s, (0.089 * s, 0.104 * s), (0.225 * s, 0.245 * s), 0.012 * s, thick=0.01)
+            p.lathe([(0.138 * s, 0.0905 * s, 0.1055 * s, 0, -0.004), (0.17 * s, 0.0895 * s, 0.1045 * s, 0, -0.004)], band, seg=28, xf=xf, cap=False)
+        self.cloth("Head", "Cloth_WideBrimHat", hat, [felt, band])
+
+    def dress_Townsman(self):
+        """镇民（男）：卷袖工装衬衫、背带、帆布裤、短靴、软毡宽边帽。"""
+        s = self.s
+        shirt = mc.pbr("WorkShirt", "Fabric032", tile=0.25, tint=(0.56, 0.62, 0.7), normal=0.6)
+        pants = mc.pbr("WorkTrousers", "Fabric066", tile=0.3, tint=(0.52, 0.42, 0.32), normal=0.8)
+        strap = mc.pbr("Suspenders", "Leather030", tile=0.1, tint=(0.7, 0.6, 0.5))
+        felt = mc.pbr("SlouchFelt", "Fabric028", tile=0.2, tint=(0.48, 0.42, 0.34), rough_mul=0.95, normal=0.5)
+        band = mc.pbr("HatBand", "Leather030", tile=0.1)
+        boot = mc.pbr("ShoeLeather", "Leather026", tile=0.15, rough_mul=0.7)
+        brass = mc.flat("Button", (0.55, 0.42, 0.2), rough=0.35, metal=1.0)
+        self.shirt(shirt)
+        self.torso("Spine", "Cloth_Shirt_Waist", shirt, 1.0 * s, 1.24 * s, 0.01)
+        self.sleeves(shirt, 0.12, cuff=(shirt, True))
+        self.trousers(pants, None, shin_end=0.36)
+        for sd in "LR":
+            self.shoe(sd, boot, boot_top=0.3)
+        self.torso("Hips", "Cloth_Waistband", pants, 1.03 * s, 1.1 * s, 0.022)
+        # 背带：前后各两条，贴着躯干外形；前面在胸口、后面在背上
+        for sd, sx in (("L", 1), ("R", -1)):
+            for side, ac in (("Front", 0.0), ("Back", math.pi)):
+                a = ac + sx * (0.62 if side == "Front" else -0.5)
+                self.patch("Chest", f"Cloth_Suspender_{sd}_{side}", strap, 1.2 * s, 1.45 * s, 0.016, a, lambda z: 0.075, nz=6, na=1)
+                self.patch("Spine", f"Cloth_Suspender_{sd}_{side}_Low", strap, 1.06 * s, 1.21 * s, 0.017, a, lambda z: 0.08, nz=3, na=1)
+        def btn(p, xf):
+            env = [(e[0], e[1], e[2], 0, e[3]) for e in self.TORSO]
+            for sx in (1, -1):
+                z = 1.075 * s; _, rx, ry, ox, oy = interp(env, z); a = sx * 0.62
+                p.sphere(0.008 * s, brass, xf=T((rx + 0.03) * math.sin(a), oy - (ry + 0.03) * math.cos(a), 0.095 * s), seg=8, rings=4)
+        self.cloth("Hips", "Cloth_Suspender_Buttons", btn, [brass])
+        def hat(p, xf):  # 软毡帽：低圆顶、帽檐前后微垂
+            p.lathe([(0.13 * s, 0.088 * s, 0.103 * s, 0, -0.004), (0.18 * s, 0.087 * s, 0.1 * s, 0, -0.004), (0.215 * s, 0.08 * s, 0.093 * s, 0, -0.004),
+                     (0.232 * s, 0.062 * s, 0.072 * s, 0, -0.004), (0.24 * s, 0.03 * s, 0.035 * s, 0, -0.004), (0.237 * s, 0, 0, 0, -0.004)], felt, seg=28, xf=xf)
+            self.hat_brim(p, xf, felt, 0.13 * s, (0.088 * s, 0.103 * s), (0.17 * s, 0.19 * s), -0.022 * s, thick=0.009)
+            p.lathe([(0.136 * s, 0.0895 * s, 0.1045 * s, 0, -0.004), (0.16 * s, 0.0885 * s, 0.1035 * s, 0, -0.004)], band, seg=28, xf=xf, cap=False)
+        self.cloth("Head", "Cloth_SlouchHat", hat, [felt, band])
+
+    def dress_Townswoman(self):
+        """镇民（女）：女性骨架；长袖连衣长裙、披肩、遮阳软帽（脸是空白的，帽檐框住它）。"""
+        s = self.s
+        dress = mc.pbr("CalicoDress", "Fabric063", tile=0.22, tint=(0.62, 0.46, 0.36), normal=0.8)
+        shawl = mc.pbr("ShawlWool", "Fabric061", tile=0.2, tint=(0.5, 0.26, 0.2), normal=0.9)
+        bonnet = mc.pbr("BonnetCotton", "Fabric032", tile=0.2, tint=(0.74, 0.7, 0.6), normal=0.6)
+        boot = mc.pbr("ShoeLeather", "Leather026", tile=0.15, rough_mul=0.7)
+        self.torso("Chest", "Cloth_Dress_Bodice", dress, 1.16 * s, 1.5 * s, 0.01, hem_top=False)
+        self.torso("Spine", "Cloth_Dress_Waist", dress, 0.99 * s, 1.24 * s, 0.013)
+        nk = self.segs["Neck"]
+        self.cloth("Neck", "Cloth_Collar", lambda p, xf: p.lathe(
+            [(0.025 * s, 0.05 * s, 0.054 * s, 0, -0.004), (0.035 * s, 0.047 * s, 0.05 * s, 0, -0.004), (0.06 * s, 0.043 * s, 0.047 * s, 0, -0.004),
+             (0.064 * s, 0.037 * s, 0.04 * s, 0, -0.004)], dress, seg=16, xf=xf), [dress])
+        self.sleeves(dress, 0.235, cuff=(dress, False), puff=0.004)
+        for sd in "LR":
+            self.shoe(sd, boot, boot_top=0.3)
+        hz = self.dims["hip_z"]
+        def sk(p, xf):  # 长裙到脚面，比内尔的更宽一点（街上走路）
+            p.lathe([(0.03 * s - hz, 0.37 * s, 0.37 * s, 0, 0.02 * s), (0.25 * s - hz, 0.325 * s, 0.32 * s, 0, 0.016 * s),
+                     (0.55 * s - hz, 0.26 * s, 0.235 * s, 0, 0.01 * s), (0.82 * s - hz, 0.202 * s, 0.155 * s, 0, 0.008 * s),
+                     (0.95 * s - hz, 0.183 * s, 0.128 * s, 0, 0.006 * s), (1.04 * s - hz, 0.155 * s, 0.11 * s, 0, 0.002 * s),
+                     (1.05 * s - hz, 0.13 * s, 0.1 * s)], dress, seg=32, xf=xf, cap=False)
+        self.cloth("Hips", "Cloth_Skirt", sk, [dress])
+        # 披肩：盖住肩和上臂，前面敞开，后背垂成三角
+        def cape(p, xf):
+            cz = self.segs["Chest"]["pivot"].z
+            cp = [(1.2 * s - cz, 0.27 * s, 0.17 * s, 0, 0.006), (1.212 * s - cz, 0.274 * s, 0.173 * s, 0, 0.006), (1.3 * s - cz, 0.285 * s, 0.168 * s, 0, 0.002),
+                  (1.38 * s - cz, 0.272 * s, 0.15 * s, 0, -0.004), (1.44 * s - cz, 0.252 * s, 0.13 * s, 0, -0.004), (1.48 * s - cz, 0.215 * s, 0.112 * s),
+                  (1.503 * s - cz, 0.145 * s, 0.09 * s), (1.515 * s - cz, 0.08 * s, 0.072 * s)]
+            vlathe(p, cp, [0.07, 0.07, 0.08, 0.1, 0.16, 0.3, 0.5, 0.7], shawl, 28, xf)
+        self.cloth("Chest", "Cloth_Shawl", cape, [shawl])
+        self.patch("Chest", "Cloth_Shawl_Point", shawl, 1.04 * s, 1.27 * s, 0.05, math.pi,
+                   lambda z: 0.05 + 0.85 * max(0.0, z - 1.04 * s) / (0.23 * s), nz=5, na=6, thick=0.006)
+        def bn(p, xf):  # 遮阳软帽：后脑的帽身 + 向前伸出的帽檐筒
+            # 一个朝前的兜帽筒：后面收成圆顶，前面伸出脸前 3 cm，下巴下面敞开（局部 Z = 前，局部 Y = 上）
+            bx = xf @ T(0, 0, 0.112 * s) @ R("X", 90)
+            p.lathe([(-0.128 * s, 0, 0), (-0.122 * s, 0.05 * s, 0.06 * s), (-0.1 * s, 0.088 * s, 0.104 * s), (-0.05 * s, 0.1 * s, 0.122 * s),
+                     (0.03 * s, 0.104 * s, 0.128 * s), (0.1 * s, 0.114 * s, 0.14 * s), (0.135 * s, 0.124 * s, 0.152 * s), (0.14 * s, 0.118 * s, 0.146 * s),
+                     (0.12 * s, 0.11 * s, 0.136 * s)], bonnet, seg=28, xf=bx, arc=(0.75, 2 * math.pi - 0.75), cap=False)
+            # 帽带：下巴下面
+            p.lathe([(0.0, 0.07 * s, 0.075 * s), (0.016 * s, 0.07 * s, 0.075 * s)], bonnet, seg=16, xf=xf @ T(0, -0.012 * s, 0.035 * s) @ R("X", 18), cap=False)
+        self.cloth("Head", "Cloth_Bonnet", bn, [bonnet])
+
     def pose_firstperson(self):
         """第一人称：双手抬到胸前（端杯 / 弹琴的高度）。"""
         P = {"L_UpperArm": (-30, 0, -6), "L_LowerArm": (-58, 0, -4), "L_Hand": (-10, 0, 0), "L_Fingers": (0, 25, 0), "L_FingersTip": (0, 30, 0),
@@ -534,7 +735,7 @@ if LINEUP:
     sc = mc.reset()
     assetc = bpy.data.collections.new("Asset"); sc.collection.children.link(assetc)
     stage = bpy.data.collections.new("Stage"); sc.collection.children.link(stage)
-    ms = [build(n, ((i - 1.5) * 0.85, 0, 0), assetc) for i, n in enumerate(VARIANTS)]
+    ms = [build(n, ((i - 1.5) * 0.85, 0, 0), assetc) for i, n in enumerate(VARIANTS[:4])]
     mc.setup_render(SAMPLES)
     mc.world_hdri(strength=0.3)
     mc.studio(coll=stage, key=900, scale=1.8)
@@ -542,9 +743,21 @@ if LINEUP:
     mc.render(mc.REVIEWS / "Mannequin_Lineup.png")
     sys.exit(0)
 
+if LINEUP_TOWN:
+    sc = mc.reset()
+    assetc = bpy.data.collections.new("Asset"); sc.collection.children.link(assetc)
+    stage = bpy.data.collections.new("Stage"); sc.collection.children.link(stage)
+    ms = [build(n, ((i - 1) * 0.9, 0, 0), assetc) for i, n in enumerate(TOWN)]
+    mc.setup_render(SAMPLES)
+    mc.world_hdri(strength=0.3)
+    mc.studio(coll=stage, key=900, scale=1.8)
+    mc.camera("Cam", (0.0, -5.0, 1.3), (0, 0, 0.9), lens=40, coll=stage)
+    mc.render(mc.REVIEWS / "Mannequin_TownLineup.png")
+    sys.exit(0)
+
 report = {}
 for name in VARIANTS:
-    if ONLY and name != ONLY:
+    if ONLY and name not in ONLY.split(","):
         continue
     sc = mc.reset()
     assetc = bpy.data.collections.new("Asset"); sc.collection.children.link(assetc)

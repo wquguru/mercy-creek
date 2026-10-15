@@ -1,0 +1,163 @@
+fileFormatVersion: 2
+guid: 6c5e3dea1d8344b2eb8d53014083e565
+ScriptedImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 2
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+  script: {fileID: 11500000, guid: 715df9372183c47e389bb6e19fbc3b52, type: 3}
+  editorImportSettings:
+    generateSecondaryUVSet: 0
+  importSettings:
+    nodeNameMethod: 1
+    animationMethod: 2
+    generateMipMaps: 1
+    texturesReadable: 0
+    defaultMinFilterMode: 9729
+    defaultMagFilterMode: 9729
+    anisotropicFilterLevel: 1
+  instantiationSettings:
+    mask: -1
+    layer: 0
+    skinUpdateWhenOffscreen: 1
+    lightIntensityFactor: 1
+    sceneObjectCreation: 2
+  assetDependencies:
+  - type: 0
+    originalUri: Assets/_MercyCreek/Art/Town/TownEdges.bin
+    assetPath: Assets/_MercyCreek/Art/Town/TownEdges.bin
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/WoodSiding009_NormalGL_1024.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/WoodSiding009_NormalGL_1024.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/WoodSiding009_Color_1024_t9799113.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/WoodSiding009_Color_1024_t9799113.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/WoodSiding009_Roughness_1024.png
+    assetPath: Assets/_MercyCreek/Art/Textures/WoodSiding009_Roughness_1024.png
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Rock030_NormalGL_1024.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Rock030_NormalGL_1024.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Rock030_Color_1024_t1009284.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Rock030_Color_1024_t1009284.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Rock030_Roughness_1024.png
+    assetPath: Assets/_MercyCreek/Art/Textures/Rock030_Roughness_1024.png
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/WoodSiding011_NormalGL_1024.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/WoodSiding011_NormalGL_1024.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/WoodSiding011_Color_1024_t626057.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/WoodSiding011_Color_1024_t626057.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/PaintedWood009C_NormalGL_1024.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/PaintedWood009C_NormalGL_1024.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/PaintedWood009C_Color_1024_t979693.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/PaintedWood009C_Color_1024_t979693.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/PaintedWood009C_Roughness_1024.png
+    assetPath: Assets/_MercyCreek/Art/Textures/PaintedWood009C_Roughness_1024.png
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Wood066_NormalGL_1024.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Wood066_NormalGL_1024.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Wood066_Color_1024_t624633.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Wood066_Color_1024_t624633.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Wood066_Roughness_1024.png
+    assetPath: Assets/_MercyCreek/Art/Textures/Wood066_Roughness_1024.png
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Planks012_NormalGL_1024.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Planks012_NormalGL_1024.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Planks012_Color_1024_t555045.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Planks012_Color_1024_t555045.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Planks012_Roughness_1024.png
+    assetPath: Assets/_MercyCreek/Art/Textures/Planks012_Roughness_1024.png
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Planks012_Color_1024.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Planks012_Color_1024.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/edge_grass_dry.png
+    assetPath: Assets/_MercyCreek/Art/Textures/edge_grass_dry.png
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/edge_note_tbd.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/edge_note_tbd.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/edge_stone_side.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/edge_stone_side.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/edge_graves_atlas_n.png
+    assetPath: Assets/_MercyCreek/Art/Textures/edge_graves_atlas_n.png
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/edge_graves_atlas.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/edge_graves_atlas.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Wood066_Color_1024_t626056.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Wood066_Color_1024_t626056.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/edge_grave_blank_n.png
+    assetPath: Assets/_MercyCreek/Art/Textures/edge_grave_blank_n.png
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/edge_grave_blank.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/edge_grave_blank.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Ground080_NormalGL_1024.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Ground080_NormalGL_1024.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Ground080_Color_1024_t604838.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Ground080_Color_1024_t604838.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Ground080_Roughness_1024.png
+    assetPath: Assets/_MercyCreek/Art/Textures/Ground080_Roughness_1024.png
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/edge_grave_martha_n.png
+    assetPath: Assets/_MercyCreek/Art/Textures/edge_grave_martha_n.png
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/edge_grave_martha.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/edge_grave_martha.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Bark007_NormalGL_1024.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Bark007_NormalGL_1024.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Bark007_Color_1024_t605652.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Bark007_Color_1024_t605652.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Bark007_Roughness_1024.png
+    assetPath: Assets/_MercyCreek/Art/Textures/Bark007_Roughness_1024.png
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/PaintedWood009C_Color_1024_t868479.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/PaintedWood009C_Color_1024_t868479.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Ground054_NormalGL_1024.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Ground054_NormalGL_1024.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Ground054_Color_1024_t827457.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Ground054_Color_1024_t827457.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Ground054_Roughness_1024.png
+    assetPath: Assets/_MercyCreek/Art/Textures/Ground054_Roughness_1024.png
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Ground080_Color_1024_t807264.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Ground080_Color_1024_t807264.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/edge_canvas_paint_s.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/edge_canvas_paint_s.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/edge_canvas_weave_n.png
+    assetPath: Assets/_MercyCreek/Art/Textures/edge_canvas_weave_n.png
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/edge_canvas_paint_n.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/edge_canvas_paint_n.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/edge_canvas_back.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/edge_canvas_back.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Wood066_Color_1024_t756655.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Wood066_Color_1024_t756655.jpg
+  reportItems: []

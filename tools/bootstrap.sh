@@ -15,7 +15,14 @@ blender --background --python tools/blender/build_saloon.py -- --export Game/Ass
 .venv/bin/python tools/gen_street_signs.py
 blender --background --python tools/blender/build_piano.py -- --no-render
 blender --background --python tools/blender/build_mannequin.py -- --no-render
+# 木头人偶马（Horse / Horse_B）+ 驿站马车（--no-render 时不需要先有马和车夫的 .gltf）
+blender --background --python tools/blender/build_horse.py -- --no-render
+blender --background --python tools/blender/build_coach.py -- --no-render
 blender --background --python tools/blender/build_props.py -- --no-render
 blender --background --python tools/blender/build_street.py
+blender --background --python tools/blender/build_town.py
+# 街道两头：教堂、墓地、西头画布（画布底稿在 Blender 里渲染，再用 Pillow 加工成手绘布景）
+.venv/bin/python tools/gen_edge_textures.py
+blender --background --python tools/blender/build_edges.py -- --paint
 [[ -x tools/build_audio.sh ]] && tools/build_audio.sh
 tools/review.sh --test

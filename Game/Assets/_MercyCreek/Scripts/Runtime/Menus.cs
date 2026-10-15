@@ -52,12 +52,20 @@ namespace MercyCreek
         }
 
         public static bool Paused { get; private set; }
+        static bool _loopArgApplied;
         public static bool Blocking => !LoopMemory.Started || Paused;
 
         void Awake()
         {
             var args = Environment.GetCommandLineArgs();
-            if (Array.IndexOf(args, "-autoshot") >= 0 || Array.IndexOf(args, "-autotest") >= 0 || Array.IndexOf(args, "-trailer") >= 0) LoopMemory.Started = true;
+            if (Array.IndexOf(args, "-autoshot") >= 0 || Array.IndexOf(args, "-autotest") >= 0 || Array.IndexOf(args, "-trailer") >= 0)
+            {
+                LoopMemory.Started = true;
+                LoopMemory.Automated = true;
+                // 评审截图：-loop N 直接拍第 N 轮（街道第 2 轮才写出来），只在首次载入时生效
+                int li = Array.IndexOf(args, "-loop");
+                if (li >= 0 && li + 1 < args.Length && !_loopArgApplied) { _loopArgApplied = true; LoopMemory.SetLoop(int.Parse(args[li + 1])); }
+            }
             int lang = Array.IndexOf(args, "-lang");
             if (lang >= 0 && lang + 1 < args.Length) Loc.Current = args[lang + 1] == "zh" ? Loc.Lang.Zh : Loc.Lang.En;
             BuildUi();
@@ -85,6 +93,12 @@ namespace MercyCreek
             yield return new WaitForSeconds(0.5f);
             ScreenCapture.CaptureScreenshot(path.Replace(".png", "_settings.png"));
             yield return new WaitForSeconds(0.5f);
+            // 开场打字页
+            Show(Screen.Title);
+            Begin();
+            yield return new WaitForSecondsRealtime(8.5f);
+            ScreenCapture.CaptureScreenshot(path.Replace(".png", "_intro.png"));
+            yield return new WaitForSecondsRealtime(0.5f);
             Application.Quit();
         }
 
@@ -122,6 +136,7 @@ namespace MercyCreek
                     break;
                 case Screen.Pause:
                     _items.Add(new Item { label = () => Loc.T("menu.resume"), submit = Resume });
+                    _items.Add(new Item { label = () => Loc.T("menu.endday"), submit = () => { Resume(); FindFirstObjectByType<LoopDirector>()?.EndAfternoon(); } });
                     _items.Add(new Item { label = () => Loc.T("menu.settings"), submit = () => OpenSettings(Screen.Pause) });
                     _items.Add(new Item { label = () => Loc.T("menu.totitle"), submit = () => { LoopMemory.Save(); ToTitle(); } });
                     if (Application.platform != RuntimePlatform.WebGLPlayer)
@@ -167,15 +182,34 @@ namespace MercyCreek
         {
             LoopMemory.Load();
             LoopMemory.Started = true;
+            LoopDirector.PendingCard = LoopDirector.Card.Continue;
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);   // 按存档的轮数重建这一轮
         }
 
         void Begin()
         {
-            LoopMemory.Started = true;
-            Sfx.I?.StopMusic(1.5f);
-            if (_titleCam) Destroy(_titleCam.gameObject);
             Show(Screen.None);
+            StartCoroutine(Intro());
+        }
+
+        /// <summary>开场：黑场打字页交代"这是第 12 稿"，再淡入第一轮。</summary>
+        System.Collections.IEnumerator Intro()
+        {
+            Sfx.I?.StopMusic(1.5f);
+            if (_hud)
+            {
+                _hud.HudVisible = false;
+                for (float f = _hud.Fade; f < 1; f += Time.unscaledDeltaTime / 0.8f) { _hud.Fade = f; yield return null; }
+            }
+            if (_titleCam) Destroy(_titleCam.gameObject);
+            if (_hud)
+                yield return _hud.TypeCard(new[]
+                {
+                    Loc.T("intro.1", LoopMemory.Draft), "", Loc.T("intro.2"), Loc.T("intro.3"), Loc.T("intro.4"),
+                }, 2.2f);
+            LoopMemory.Started = true;
+            if (_hud) for (float f = 1; f > 0; f -= Time.unscaledDeltaTime / 1.6f) { _hud.Fade = f; yield return null; }
+            if (_hud) _hud.Fade = 0;
         }
 
         void Resume()
@@ -213,7 +247,7 @@ namespace MercyCreek
 
             if (kb != null && kb.escapeKey.wasPressedThisFrame)
             {
-                if (_screen == Screen.None && LoopMemory.Started && !(_hud && (_hud.ChoicesOpen || _hud.EndingShown)))
+                if (_screen == Screen.None && LoopMemory.Started && !(_hud && (_hud.ChoicesOpen || _hud.EndingShown || _hud.Typing)))
                 {
                     Paused = true;
                     Time.timeScale = 0f;

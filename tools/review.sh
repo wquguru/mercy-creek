@@ -17,9 +17,11 @@ run_unity() {   # $1 = method, $2 = log name
 [[ " $* " == *" --no-build "* ]] || { echo "== build"; run_unity MercyCreek.EditorTools.BuildMac.Run build || exit 1; }
 echo "== autoshot"
 rm -rf "$R"; mkdir -p "$R"
-"$P/Builds/Mac/MercyCreek.app/Contents/MacOS/Mercy Creek" -autoshot "$R" ${=SHOT_ARGS:-} -screen-width 1600 -screen-height 900 -screen-fullscreen 0 -logFile - > "$P/Logs/player.log" 2>&1 &
+# 默认拍第 3 稿（街道、墓地都已写出来，马车停在门口）；SHOT_ARGS 里给了 -loop 就用它的
+LOOPARG=(-loop 3); [[ " ${SHOT_ARGS:-} " == *" -loop "* ]] && LOOPARG=()
+"$P/Builds/Mac/MercyCreek.app/Contents/MacOS/Mercy Creek" -autoshot "$R" $LOOPARG ${=SHOT_ARGS:-} -screen-width 1600 -screen-height 900 -screen-fullscreen 0 -logFile - > "$P/Logs/player.log" 2>&1 &
 PID=$!
-for i in {1..150}; do sleep 1; kill -0 $PID 2>/dev/null || break; done
+for i in {1..300}; do sleep 1; kill -0 $PID 2>/dev/null || break; done
 kill $PID 2>/dev/null
 grep -E 'Exception|\[AutoShot\]' "$P/Logs/player.log" | head -20
 ls "$R"
@@ -33,15 +35,16 @@ for L in zh en; do
   grep -E 'Exception' "$P/Logs/title_$L.log" | head -5
 done
 
-# 自动通关测试：三个结局各跑一遍
+# 自动通关测试：三个结局各跑一遍，外加 town（马车 / 电报 / 墓地 → 觉醒）
 if [[ " $* " == *" --test "* ]]; then
   T=$ROOT/Reviews/autotest; rm -rf "$T"; mkdir -p "$T"
   FAILED=0
-  for E in awaken escape reset; do
+  for E in awaken escape reset town walls; do
     echo "== autotest $E"
-    "$P/Builds/Mac/MercyCreek.app/Contents/MacOS/Mercy Creek" -autotest "$T" -ending $E -lang $([[ $E == escape ]] && echo en || echo zh) -screen-width 1600 -screen-height 900 -screen-fullscreen 0 -logFile - > "$P/Logs/autotest_$E.log" 2>&1 &
+    EXTRA=(); [[ $E == walls ]] && EXTRA=(-loop 3)
+    "$P/Builds/Mac/MercyCreek.app/Contents/MacOS/Mercy Creek" -autotest "$T" -ending $E $EXTRA -lang $([[ $E == escape ]] && echo en || echo zh) -screen-width 1600 -screen-height 900 -screen-fullscreen 0 -logFile - > "$P/Logs/autotest_$E.log" 2>&1 &
     PID=$!
-    for i in {1..300}; do sleep 1; kill -0 $PID 2>/dev/null || break; done
+    for i in {1..400}; do sleep 1; kill -0 $PID 2>/dev/null || break; done
     kill $PID 2>/dev/null
     grep -E 'Exception|\[AutoTest\]|\[Story\]' "$P/Logs/autotest_$E.log" | head -40
     grep -q "\[AutoTest\] PASS" "$P/Logs/autotest_$E.log" && ! grep -q "\[AutoTest\] FAIL" "$P/Logs/autotest_$E.log" || FAILED=1

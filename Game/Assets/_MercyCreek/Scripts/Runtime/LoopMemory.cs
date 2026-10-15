@@ -10,6 +10,16 @@ namespace MercyCreek
     public static class LoopMemory
     {
         public static int Loop { get; private set; } = 1;
+
+        /// <summary>玩家看到的"第 N 稿"：第一轮就是第 12 稿（玛莎是第 11 稿的人，见 GAME_DESIGN.md）。</summary>
+        public static int Draft => Loop + 11;
+        public static int DraftOf(int loop) => loop + 11;
+
+        /// <summary>评审 / 测试 / 宣传片启动：跳过开场打字页和稿数卡。</summary>
+        public static bool Automated { get; set; }
+
+        /// <summary>评审截图用：`-loop N` 直接从第 N 轮开始。</summary>
+        public static void SetLoop(int loop) { Loop = Mathf.Max(1, loop); RememberedThisLoop = false; }
         public static float TotalSeconds { get; set; }
         public static bool RememberedThisLoop { get; private set; }
 
@@ -76,7 +86,7 @@ namespace MercyCreek
         static void ResetForPlayMode()
         {
             // 编辑器关掉域重载时，静态数据会残留到下一次 Play
-            Clear(); LastEnding = null; Started = false;
+            Clear(); LastEnding = null; Started = false; Automated = false;
         }
     }
 }

@@ -12,8 +12,8 @@ namespace MercyCreek
     /// </summary>
     public class Hud : MonoBehaviour
     {
-        Text _loop, _prompt, _say, _card, _choices;
-        Image _fade, _crosshair;
+        Text _loop, _prompt, _say, _card, _cardSub, _choices, _typed, _book, _bookTitle;
+        Image _fade, _crosshair, _bookBg;
         float _sayUntil;
         Font _font;
 
@@ -61,19 +61,40 @@ namespace MercyCreek
             _choices.supportRichText = true;
             _choices.gameObject.AddComponent<Shadow>().effectColor = new Color(0, 0, 0, 0.85f);
 
+            // 静态字体图集不支持富文本 <size>（会整段不显示），大小不同的字一律分开放
             _card = MakeText(canvasGo.transform, "EndCard", 54, TextAnchor.MiddleCenter, new Color(1, 0.93f, 0.8f, 0));
-            Stretch(_card.rectTransform);
+            Anchor(_card.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0, 40), new Vector2(1600, 120));
+            _cardSub = MakeText(canvasGo.transform, "EndCardSub", 30, TextAnchor.MiddleCenter, new Color(1, 0.93f, 0.8f, 0));
+            Anchor(_cardSub.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0, -50), new Vector2(1600, 80));
+
+            // 记忆本：Tab 开关，时间照常流逝
+            _bookBg = MakeImage(canvasGo.transform, "BookBg", new Color(0.05f, 0.035f, 0.02f, 0.82f));
+            Anchor(_bookBg.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1180, 760));
+            _book = MakeText(canvasGo.transform, "Book", 28, TextAnchor.UpperLeft, new Color(1, 0.94f, 0.82f, 1));
+            Anchor(_book.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0, -10), new Vector2(1060, 680));
+            _book.supportRichText = true; _book.lineSpacing = 1.15f;
+            _bookTitle = MakeText(canvasGo.transform, "BookTitle", 40, TextAnchor.UpperLeft, new Color(1, 0.94f, 0.82f, 1));
+            Anchor(_bookTitle.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0, 300), new Vector2(1060, 60));
+            _bookBg.enabled = _book.enabled = _bookTitle.enabled = false;
+
+            // 黑场上的打字页（开场、稿数卡）
+            _typed = MakeText(canvasGo.transform, "Typed", 36, TextAnchor.MiddleLeft, new Color(0.95f, 0.9f, 0.8f, 1));
+            Anchor(_typed.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0, 0), new Vector2(1300, 600));
+            _typed.supportRichText = true; _typed.lineSpacing = 1.5f;
 
             _fade.transform.SetAsLastSibling();
+            _typed.transform.SetAsLastSibling();
             _card.transform.SetAsLastSibling();
+            _cardSub.transform.SetAsLastSibling();
             Fade = 1f;
         }
 
         void Update()
         {
-            _loop.text = Loc.T("ui.loop", LoopMemory.Loop) + "\n" + Loc.T("ui.memory", LoopMemory.Fragments.Count);
+            _loop.text = Loc.T("ui.loop", LoopMemory.Draft) + "\n" + Loc.T("ui.memory", LoopMemory.Fragments.Count);
             if (Time.time > _sayUntil) _say.text = "";
             UpdateChoices();
+            UpdateBook();
         }
 
         // ---------- 对话选项 ----------
@@ -130,12 +151,84 @@ namespace MercyCreek
             act?.Invoke();
         }
 
+        // ---------- 记忆本 ----------
+        public bool BookOpen => _book.enabled;
+
+        public void ShowBook(bool on) { _book.enabled = _bookBg.enabled = _bookTitle.enabled = on; if (on) RenderBook(); }
+
+        void UpdateBook()
+        {
+            var kb = Keyboard.current;
+            bool can = LoopMemory.Started && !Menus.Paused && !EndingShown && !Typing && Fade < 0.5f;
+            if (kb != null && kb.tabKey.wasPressedThisFrame && can) ShowBook(!BookOpen);
+            if (BookOpen && !can) ShowBook(false);
+            if (BookOpen) RenderBook();
+        }
+
+        void RenderBook()
+        {
+            var sb = new System.Text.StringBuilder();
+            _bookTitle.text = Loc.T("book.title");
+            sb.Append("\n\n");
+            var dir = Story.I ? Story.I.director : null;
+            int left = dir ? Mathf.Max(0, Mathf.CeilToInt(dir.loopSeconds - dir.Elapsed)) : 0;
+            sb.Append($"<color=#b8a890>{Loc.T("book.time", LoopMemory.Draft, left / 60, left % 60)}</color>\n\n");
+            if (LoopMemory.Fragments.Count == 0) sb.Append($"<color=#b8a890>{Loc.T("book.empty")}</color>\n");
+            foreach (var f in LoopMemory.Fragments)
+                sb.Append($"<color=#e8c48a>◆ {Loc.T("frag." + f)}</color>　<color=#d8ccb8>{Loc.T("frag." + f + ".d")}</color>\n");
+            if (Story.I) sb.Append($"\n<color=#e8c48a>{Loc.T("book.next")}</color>\n<i>{Story.I.NextHint()}</i>\n");
+            sb.Append($"\n<color=#8a7c68>{Loc.T("book.close")}</color>");
+            _book.text = sb.ToString();
+        }
+
+        // ---------- 打字页 ----------
+        public bool Typing { get; private set; }
+
+        /// <summary>黑场上逐字打出几行字（打字机声）；任意键先补全、再结束。调用前后黑场由调用方负责。</summary>
+        public System.Collections.IEnumerator TypeCard(string[] lines, float hold = 1.6f)
+        {
+            Typing = true;
+            Fade = 1f;
+            HudVisible = false;
+            var kb = Keyboard.current;
+            bool skip = false;
+            string shown = "";
+            yield return null;
+            for (int l = 0; l < lines.Length && !skip; l++)
+            {
+                string line = lines[l];
+                for (int i = 0; i <= line.Length && !skip; i++)
+                {
+                    // 富文本标签整段跳过，不逐字打
+                    if (i < line.Length && line[i] == '<') { int end = line.IndexOf('>', i); if (end > i) i = end; }
+                    _typed.text = shown + line.Substring(0, Mathf.Min(i, line.Length));
+                    if (i < line.Length && line[i] != ' ') Sfx.I?.TypeKey2D();
+                    if (AnyKey(kb)) skip = true;
+                    yield return new WaitForSecondsRealtime(i < line.Length && "，。,.—".IndexOf(line[i]) >= 0 ? 0.16f : 0.045f);
+                }
+                shown += line + "\n";
+                if (!skip) { Sfx.I?.TypeReturn2D(); yield return new WaitForSecondsRealtime(0.45f); }
+            }
+            _typed.text = string.Join("\n", lines);
+            for (float t = 0; t < (skip ? 0.4f : hold); t += Time.unscaledDeltaTime)
+            {
+                if (!skip && t > 0.2f && AnyKey(kb)) break;
+                yield return null;
+            }
+            _typed.text = "";
+            HudVisible = true;
+            Typing = false;
+        }
+
+        static bool AnyKey(Keyboard kb) =>
+            (kb != null && kb.anyKey.wasPressedThisFrame) || (Mouse.current?.leftButton.wasPressedThisFrame ?? false);
+
         public void SetPrompt(string s) => _prompt.text = s ?? "";
 
         public string Saying => _say.text;
 
         /// <summary>宣传片取景：除黑场外全部隐藏。</summary>
-        public void HideAll() { HudVisible = false; _say.enabled = false; _choices.enabled = false; }
+        public void HideAll() { HudVisible = false; _say.enabled = false; _choices.enabled = false; ShowBook(false); }
 
         public void Say(string s, float seconds = 5f)
         {
@@ -147,8 +240,9 @@ namespace MercyCreek
         public void ShowEnding(string title, string sub)
         {
             CloseChoices();
-            _card.text = $"{title}\n\n<size=30>{sub}</size>";
-            _card.supportRichText = true;
+            ShowBook(false);
+            _card.text = title;
+            _cardSub.text = sub;
             StartCoroutine(EndingRoutine());
         }
 
@@ -162,10 +256,10 @@ namespace MercyCreek
             for (float t = 0; t < 1; t += Time.deltaTime / 3f)
             {
                 Fade = t;
-                _card.color = new Color(1, 0.93f, 0.8f, t);
+                _card.color = _cardSub.color = new Color(1, 0.93f, 0.8f, t);
                 yield return null;
             }
-            Fade = 1; _card.color = new Color(1, 0.93f, 0.8f, 1);
+            Fade = 1; _card.color = _cardSub.color = new Color(1, 0.93f, 0.8f, 1);
             EndingShown = true;
         }
 

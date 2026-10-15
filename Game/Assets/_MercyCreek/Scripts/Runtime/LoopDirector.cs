@@ -10,7 +10,7 @@ namespace MercyCreek
     /// </summary>
     public class LoopDirector : MonoBehaviour
     {
-        public float loopSeconds = 180f;
+        public float loopSeconds = 240f;
         public Light sun;
         public Light[] lamps;
         public Volume resetVolume;          // 重置瞬间：去饱和 + 冷色
@@ -32,20 +32,55 @@ namespace MercyCreek
         /// <summary>评审截图用：直接跳到某个时间点。</summary>
         public void Skip(float seconds) { _t = seconds; ApplyTime(Mathf.Clamp01(_t / loopSeconds)); }
 
+        public enum Card { None, Reset, Continue }
+
+        /// <summary>下一次场景载入时要在黑场上打的稿数卡（重置 / 读档时设置）。</summary>
+        public static Card PendingCard;
+
+        /// <summary>打字页期间时间不走。</summary>
+        public bool Holding { get; set; }
+
         IEnumerator Start()
         {
-            if (LoopMemory.Loop > 1) hud.Say(Loc.T("ui.again"), 4f);
             if (LoopMemory.Started) LoopMemory.Save();
             ApplyTime(0f);
+            hud.Fade = 1f;
+            var card = PendingCard; PendingCard = Card.None;
+            if (LoopMemory.Started && !LoopMemory.Automated && card != Card.None)
+            {
+                Holding = true;
+                yield return null;
+                var lines = card == Card.Reset
+                    ? new[] { Loc.T("card.void", LoopMemory.DraftOf(LoopMemory.Loop - 1)), Loc.T("card.draft", LoopMemory.Draft) }
+                    : new[] { Loc.T("card.draft", LoopMemory.Draft) };
+                yield return hud.TypeCard(lines, 1.0f);
+                Holding = false;
+            }
             for (float f = 1; f > 0; f -= Time.deltaTime / 1.6f) { hud.Fade = f; yield return null; }
             hud.Fade = 0;
         }
 
+        /// <summary>暂停菜单"结束这个下午"。</summary>
+        public void EndAfternoon() { if (!_resetting) StartCoroutine(ResetLoop()); }
+
         bool _pianoStarted;
+
+        [Header("雾：屋里的暖色薄雾是酒馆氛围的一部分；街上要看得远")]
+        public float fogIndoor = 0.018f, fogOutdoor = 0.006f;
+        float _outdoors = -1f;
+
+        void LateUpdate()
+        {
+            var cam = Camera.main;
+            if (!cam) return;
+            float goal = Sfx.Indoors(cam.transform.position) ? 0f : 1f;
+            _outdoors = _outdoors < 0f ? goal : Mathf.MoveTowards(_outdoors, goal, Time.unscaledDeltaTime / 1.2f);
+            RenderSettings.fogDensity = Mathf.Lerp(fogIndoor, fogOutdoor, _outdoors);
+        }
 
         void Update()
         {
-            if (_resetting || !LoopMemory.Started) return;
+            if (_resetting || !LoopMemory.Started || Holding) return;
             _t += Time.deltaTime;
             if (!_pianoStarted && _t >= Story.WaltzStart) { _pianoStarted = true; StartPiano(); }
             LoopMemory.TotalSeconds += Time.deltaTime;
@@ -99,6 +134,7 @@ namespace MercyCreek
             hud.Fade = 1;
             Time.timeScale = 1f;
             LoopMemory.NextLoop();
+            PendingCard = Card.Reset;
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         }
     }
