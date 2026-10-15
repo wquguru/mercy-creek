@@ -33,8 +33,8 @@ namespace MercyCreek.EditorTools
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
             // ---------- 场景几何 ----------
-            var glb = AssetDatabase.LoadAssetAtPath<GameObject>(Root + "/Art/Saloon/Saloon.glb")
-                      ?? throw new Exception("Saloon.glb not imported");
+            var glb = AssetDatabase.LoadAssetAtPath<GameObject>(Root + "/Art/Saloon/Saloon.gltf")
+                      ?? throw new Exception("Saloon.gltf not imported");
             var saloon = (GameObject)PrefabUtility.InstantiatePrefab(glb);
             saloon.name = "Saloon";
             saloon.transform.rotation = Quaternion.Euler(0, 180, 0);
@@ -150,10 +150,10 @@ namespace MercyCreek.EditorTools
             loop.sun = sun; loop.lamps = lamps.ToArray(); loop.resetVolume = reset; loop.hud = hud;
 
             // ---------- 外景、钢琴、道具、人偶、剧情 ----------
-            var street = PlaceGlb("Art/Street/StreetBackdrop.glb", "Street Backdrop", Vector3.zero, 180, false);
+            var street = PlaceGlb("Art/Street/StreetBackdrop.gltf", "Street Backdrop", Vector3.zero, 180, false);
             foreach (var r in street.GetComponentsInChildren<MeshRenderer>()) r.receiveGI = ReceiveGI.LightProbes;
 
-            var piano = PlaceGlb("Art/Props/PlayerPiano.glb", "Player Piano", new Vector3(3.2f, 0, 9.65f), 180, true);
+            var piano = PlaceGlb("Art/Props/PlayerPiano.gltf", "Player Piano", new Vector3(3.2f, 0, 9.65f), 180, true);
             var stool = Find(piano, "PianoStool");
             var stoolBounds = WorldBounds(stool.gameObject);
 
@@ -175,12 +175,12 @@ namespace MercyCreek.EditorTools
             Interact(saloon, "dartboard_root", "dartboard");
             Interact(saloon, "wine_bottles_01_root", "bottles");
             float barTop = WorldBounds(Find(saloon, "BarTop").gameObject).max.y;
-            var glass = PlaceGlb("Art/Props/WhiskeyGlass.glb", "Chipped Glass", new Vector3(-4.8f, barTop, 4.35f), 0, false);
+            var glass = PlaceGlb("Art/Props/WhiskeyGlass.gltf", "Chipped Glass", new Vector3(-4.8f, barTop, 4.35f), 0, false);
             InteractBox(glass, "glass", 0.12f);
-            var calendar = PlaceGlb("Art/Props/Calendar.glb", "Calendar", new Vector3(-5.5f, 1.4f, 0.02f), 0, false);
+            var calendar = PlaceGlb("Art/Props/Calendar.gltf", "Calendar", new Vector3(-5.5f, 1.4f, 0.02f), 0, false);
             InteractBox(calendar, "calendar", 0.08f);
             float backBarTop = WorldBounds(Find(saloon, "BackBarTop").gameObject).max.y;
-            story.letter = PlaceGlb("Art/Props/Letter.glb", "Letter", new Vector3(-6.62f, backBarTop, 4.1f), 75, false);
+            story.letter = PlaceGlb("Art/Props/Letter.gltf", "Letter", new Vector3(-6.62f, backBarTop, 4.1f), 75, false);
             var drawer = new GameObject("Interact Drawer");
             drawer.transform.position = new Vector3(-6.62f, 0.72f, 4.1f);
             var dbox = drawer.AddComponent<BoxCollider>(); dbox.isTrigger = true; dbox.size = new Vector3(0.7f, 0.55f, 0.9f);
@@ -191,7 +191,7 @@ namespace MercyCreek.EditorTools
                 .Where(t => t.name.StartsWith("round_wooden_table_02") && t.name.EndsWith("_root"))
                 .OrderBy(t => Vector3.Distance(t.position, new Vector3(-3f, 0, 1.9f))).First();
             float tableTop = WorldBounds(craneTable.gameObject).max.y;
-            story.notebook = PlaceGlb("Art/Props/Notebook.glb", "Crane Notebook", new Vector3(-3.0f, tableTop, 1.58f), 180, false);
+            story.notebook = PlaceGlb("Art/Props/Notebook.gltf", "Crane Notebook", new Vector3(-3.0f, tableTop, 1.58f), 180, false);
             InteractBox(story.notebook, "notebook", 0.1f);
 
             // 前门：挡住，只能看
@@ -206,9 +206,9 @@ namespace MercyCreek.EditorTools
             story.backDoor = MakeDoor("Back Door", new Vector3(5.6f, 0f, 10.1f), 1.0f, 2.3f, doorMat, "backdoor");
 
             // 4 号房：书桌 + 自己在打字的打字机
-            var desk = PlaceGlb("Art/Props/Desk.glb", "Room 4 Desk", new Vector3(0.3f, 3.2f, 12.6f), 180, true);
+            var desk = PlaceGlb("Art/Props/Desk.gltf", "Room 4 Desk", new Vector3(0.3f, 3.2f, 12.6f), 180, true);
             var deskTop = WorldBounds(Find(desk, "Desk").gameObject);
-            var typewriter = PlaceGlb("Art/Props/Typewriter.glb", "Typewriter", new Vector3(deskTop.center.x, deskTop.max.y, deskTop.center.z + 0.05f), 180, false);
+            var typewriter = PlaceGlb("Art/Props/Typewriter.gltf", "Typewriter", new Vector3(deskTop.center.x, deskTop.max.y, deskTop.center.z + 0.05f), 180, false);
             story.typewriterPaper = Find(typewriter, "Paper") ?? typewriter.transform;
             InteractBox(typewriter, "typewriter", 0.25f);
             PointLight("Room 4 Lamp", new Vector3(0.6f, 4.6f, 12.2f), 4f, new Color(1f, 0.7f, 0.42f), true).intensity = 1.2f;
@@ -602,7 +602,7 @@ namespace MercyCreek.EditorTools
 
         static Npc MakeNpc(string file, string id, string nameKey, float stride)
         {
-            var go = PlaceGlb($"Art/Characters/Mannequin_{file}.glb", file, Vector3.zero, 0, false);
+            var go = PlaceGlb($"Art/Characters/Mannequin_{file}.gltf", file, Vector3.zero, 0, false);
             var rig = go.AddComponent<MannequinRig>();
             rig.stride = stride;
             var npc = go.AddComponent<Npc>();
@@ -631,7 +631,7 @@ namespace MercyCreek.EditorTools
             knob.transform.SetParent(root.transform, false);
             knob.transform.localPosition = new Vector3(width - 0.12f, 1.0f, -0.05f);
             knob.transform.localScale = Vector3.one * 0.06f;
-            var brass = AssetDatabase.LoadAllAssetsAtPath($"{Root}/Art/Saloon/Saloon.glb").OfType<Material>().FirstOrDefault(m => m.name == "Brass");
+            var brass = AssetDatabase.LoadAllAssetsAtPath($"{Root}/Art/Saloon/Saloon.gltf").OfType<Material>().FirstOrDefault(m => m.name == "Brass");
             if (brass) knob.GetComponent<MeshRenderer>().sharedMaterial = brass;
             var d = root.AddComponent<SwingDoor>();
             d.openAngle = -100f;

@@ -1,0 +1,59 @@
+fileFormatVersion: 2
+guid: 75eec16662b144aa5a437ba0439263e8
+ScriptedImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 2
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+  script: {fileID: 11500000, guid: 715df9372183c47e389bb6e19fbc3b52, type: 3}
+  editorImportSettings:
+    generateSecondaryUVSet: 0
+  importSettings:
+    nodeNameMethod: 1
+    animationMethod: 2
+    generateMipMaps: 1
+    texturesReadable: 0
+    defaultMinFilterMode: 9729
+    defaultMagFilterMode: 9729
+    anisotropicFilterLevel: 1
+  instantiationSettings:
+    mask: -1
+    layer: 0
+    skinUpdateWhenOffscreen: 1
+    lightIntensityFactor: 1
+    sceneObjectCreation: 2
+  assetDependencies:
+  - type: 0
+    originalUri: Assets/_MercyCreek/Art/Props/Desk.bin
+    assetPath: Assets/_MercyCreek/Art/Props/Desk.bin
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Wood066_NormalGL_1024.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Wood066_NormalGL_1024.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Wood066_Color_1024_t706055.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Wood066_Color_1024_t706055.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Wood066_Roughness_1024.png
+    assetPath: Assets/_MercyCreek/Art/Textures/Wood066_Roughness_1024.png
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Wood027_NormalGL_1024.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Wood027_NormalGL_1024.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Wood027_Color_1024.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Wood027_Color_1024.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Wood027_Roughness_1024.png
+    assetPath: Assets/_MercyCreek/Art/Textures/Wood027_Roughness_1024.png
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Leather037_NormalGL_1024.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Leather037_NormalGL_1024.jpg
+  - type: 1
+    originalUri: Assets/_MercyCreek/Art/Textures/Leather037_Color_1024_t426236.jpg
+    assetPath: Assets/_MercyCreek/Art/Textures/Leather037_Color_1024_t426236.jpg
+  reportItems:
+  - type: 2
+    code: 20
+    messages:
+    - KHR_materials_specular

@@ -48,7 +48,7 @@ Reviews/             评审截图（unity/ 与 autotest/ 每次重新生成，gi
 |---|---|
 | 从零复原工程（新机器 / 新克隆） | `tools/bootstrap.sh` |
 | 重下 CC0 资产 | `python3 tools/fetch_assets.py` |
-| 重建酒馆模型并导出 | `blender --background --python tools/blender/build_saloon.py -- --export Game/Assets/_MercyCreek/Art/Saloon/Saloon.glb` |
+| 重建酒馆模型并导出 | `blender --background --python tools/blender/build_saloon.py -- --export Game/Assets/_MercyCreek/Art/Saloon/Saloon.gltf` |
 | 重建场景 + Mac 构建 + 截图 | `tools/review.sh` |
 | 同上并自动通关（三个结局各一遍，含标题 / 分享卡片截图） | `tools/review.sh --test` |
 | 只截图 | `tools/review.sh --no-setup --no-build` |

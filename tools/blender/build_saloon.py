@@ -446,8 +446,6 @@ if EXPORT:
     for cname in ("Architecture", "Props", "Exterior"):
         for o in coll[cname].all_objects:
             o.select_set(True)
-    pathlib.Path(EXPORT).parent.mkdir(parents=True, exist_ok=True)
-    bpy.ops.export_scene.gltf(filepath=EXPORT, export_format="GLB", use_selection=True,
-                              export_lights=False, export_cameras=False, export_apply=True,
-                              export_yup=True)
-    print("exported", EXPORT)
+    sys.path.insert(0, str(pathlib.Path(__file__).parent))
+    import mc_common
+    mc_common.export_gltf(EXPORT)

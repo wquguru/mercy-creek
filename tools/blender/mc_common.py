@@ -337,17 +337,27 @@ def descendants(root):
     return [root, *root.children_recursive]
 
 
+def export_gltf(path, **kw):
+    """导出 .gltf + .bin，贴图放进共用的 Art/Textures（同名贴图自动去重；Unity 按平台压缩，见 TextureImportRules.cs）。
+    path 写成 .glb 也行，会改成 .gltf，并删掉旧的 .glb。"""
+    import os
+    path = pathlib.Path(path).with_suffix(".gltf"); path.parent.mkdir(parents=True, exist_ok=True)
+    tex = ART / "Textures"; tex.mkdir(parents=True, exist_ok=True)
+    bpy.ops.export_scene.gltf(filepath=str(path), export_format="GLTF_SEPARATE",
+                              export_texture_dir=os.path.relpath(tex, path.parent),
+                              use_selection=True, export_lights=False, export_cameras=False, export_apply=True,
+                              export_yup=True, export_image_format="AUTO", **kw)
+    for old in (path.with_suffix(".glb"), path.with_suffix(".glb.meta")):
+        if old.exists(): old.unlink()
+    print("exported", path, f"{path.with_suffix('.bin').stat().st_size / 1e6:.1f} MB bin")
+
+
 def export_glb(path, roots):
     bpy.ops.object.select_all(action="DESELECT")
     for r in roots:
         for o in descendants(r):
             o.select_set(True)
-    path = pathlib.Path(path); path.parent.mkdir(parents=True, exist_ok=True)
-    bpy.ops.export_scene.gltf(filepath=str(path), export_format="GLB", use_selection=True,
-                              export_lights=False, export_cameras=False, export_apply=True,
-                              export_yup=True, export_tangents=True, export_animations=False,
-                              export_image_format="AUTO")
-    print("exported", path, f"{path.stat().st_size / 1e6:.1f} MB")
+    export_gltf(path, export_tangents=True, export_animations=False)
 
 
 # ------------------------------------------------------------------ 评审渲染
