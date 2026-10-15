@@ -97,7 +97,7 @@ namespace MercyCreek
             var sb = new System.Text.StringBuilder();
             sb.Append($"<color=#e8c48a>{_talkingTo.DisplayName}</color>\n");
             for (int i = 0; i < _opts.Count; i++)
-                sb.Append(i == _sel ? $"<b>▸ {i + 1}. {_opts[i].label}</b>\n" : $"   {i + 1}. <color=#c8b8a0>{_opts[i].label}</color>\n");
+                sb.Append(i == _sel ? $"<color=#ffe2a8>▸ {i + 1}. {_opts[i].label}</color>\n" : $"   {i + 1}. <color=#c8b8a0>{_opts[i].label}</color>\n");
             _choices.text = sb.ToString();
         }
 

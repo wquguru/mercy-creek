@@ -54,9 +54,14 @@ GLB 导入后根节点绕 Y 转 180°，于是 **Unity (x, y, z) = Blender (x, z
 - 探针只放在室内（`APV Hall` / `APV Room 4`），反射探针盒必须完整包住房间（否则盒外表面反射天空盒，发灰发亮）
 
 ## 已知问题 / 待办
-- 构建 2.4GB：贴图未压缩、人偶 GLB 各自带一份 2K 木纹。上线前做贴图压缩、降到 1K、去重
+- Mac 构建约 0.8GB（贴图 BC7 2K）
 - 角色衣服是刚体壳，长裙 / 围裙不跟腿动，步幅受限
 - 人偶没有手持道具（倒酒、写字只是手势）
 - 镜子不反射（"镜中人偶"只靠文字）
 - 前墙内侧、天花板在午后仍略偏冷灰
-- Web（WebGPU）构建未验证
+- 烘 APV 时日志里会出现一次 `ArgumentNullException ... WriteBakingCells`（新建场景后第一次烘焙时情景名为空），两个情景的数据仍会正确写入，暂不处理
+
+## 网页版
+- 只用 WebGPU（`BuildWeb.cs`），Brotli + 解压回退，模板 `Assets/WebGLTemplates/MercyCreek`：不支持 WebGPU 时显示中英说明；网址参数转成命令行参数（`?lang=zh&autotest=x&ending=awaken`）
+- 贴图 Web 端 1K DXT Crunch（`TextureImportRules.cs`）；字体是静态图集（`FontImportRules.cs`，动态字体在 WebGPU 上会丢字）
+- 首包约 65MB；Chrome 本机加载约 3 秒

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mercy Creek</title>
+  <meta name="description" content="每天下午三点，一切重来。Every afternoon at three, it all begins again.">
+  <style>
+    :root { --bg: #0d0a08; --ink: #f0e2c8; --gold: #e8c48a; --dim: #9a8b74; }
+    html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font-family: "Noto Serif SC", "Songti SC", Georgia, serif; overflow: hidden; }
+    #unity-canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; background: var(--bg); display: block; outline: none; }
+    #overlay { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; padding: 0 9vw; background: var(--bg); transition: opacity 1.2s; }
+    #overlay.gone { opacity: 0; pointer-events: none; }
+    h1 { font-size: clamp(36px, 6vw, 84px); letter-spacing: .04em; margin: 0 0 .2em; font-weight: 600; }
+    .tag { color: var(--dim); font-style: italic; margin: 0 0 3em; font-size: clamp(14px, 1.6vw, 22px); }
+    #bar { width: min(420px, 80vw); height: 2px; background: #2a2219; }
+    #fill { width: 0; height: 100%; background: var(--gold); transition: width .3s; }
+    #status { margin-top: 1em; color: var(--dim); font-size: 14px; }
+    #nogpu { display: none; max-width: 640px; line-height: 1.8; color: var(--ink); }
+    #nogpu b { color: var(--gold); }
+    @media (prefers-color-scheme: light) { :root { --bg: #0d0a08; } }
+  </style>
+</head>
+<body>
+  <canvas id="unity-canvas" tabindex="-1"></canvas>
+  <div id="overlay">
+    <h1>MERCY CREEK</h1>
+    <p class="tag">每天下午三点，一切重来。 · Every afternoon at three, it all begins again.</p>
+    <div id="bar"><div id="fill"></div></div>
+    <div id="status">加载中 Loading…</div>
+    <div id="nogpu">
+      <p><b>你的浏览器不支持 WebGPU。</b><br>请用最新版 Chrome / Edge（桌面版），或 Safari 26 以上打开。</p>
+      <p><b>Your browser doesn't support WebGPU.</b><br>Please use a recent desktop Chrome / Edge, or Safari 26+.</p>
+    </div>
+  </div>
+  <script>
+    (async function () {
+      const overlay = document.getElementById("overlay");
+      const fill = document.getElementById("fill");
+      const status = document.getElementById("status");
+      const fail = () => { document.getElementById("bar").style.display = "none"; status.style.display = "none"; document.getElementById("nogpu").style.display = "block"; };
+      if (!navigator.gpu) return fail();
+      try { if (!(await navigator.gpu.requestAdapter())) return fail(); } catch (e) { return fail(); }
+
+      // 网址参数转成游戏命令行参数：?autoshot=x&lang=zh → -autoshot x -lang zh
+      const args = [];
+      new URLSearchParams(location.search).forEach((v, k) => { args.push("-" + k); if (v) args.push(v); });
+
+      const script = document.createElement("script");
+      script.src = "Build/{{{ LOADER_FILENAME }}}";
+      script.onload = () => {
+        createUnityInstance(document.getElementById("unity-canvas"), {
+          arguments: args,
+          dataUrl: "Build/{{{ DATA_FILENAME }}}",
+          frameworkUrl: "Build/{{{ FRAMEWORK_FILENAME }}}",
+#if USE_WASM
+          codeUrl: "Build/{{{ CODE_FILENAME }}}",
+#endif
+          streamingAssetsUrl: "StreamingAssets",
+          companyName: {{{ JSON.stringify(COMPANY_NAME) }}},
+          productName: {{{ JSON.stringify(PRODUCT_NAME) }}},
+          productVersion: {{{ JSON.stringify(PRODUCT_VERSION) }}},
+        }, (p) => {
+          fill.style.width = (p * 100).toFixed(0) + "%";
+          status.textContent = p < 0.9 ? `加载中 Loading… ${(p * 100).toFixed(0)}%` : "准备酒馆 Preparing the saloon…";
+        }).then((instance) => {
+          window.unityInstance = instance;
+          overlay.classList.add("gone");
+          document.getElementById("unity-canvas").focus();
+        }).catch((msg) => { status.textContent = "出错了 Error: " + msg; console.error(msg); });
+      };
+      document.body.appendChild(script);
+    })();
+  </script>
+</body>
+</html>

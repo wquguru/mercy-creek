@@ -32,6 +32,8 @@ for weight in ("Regular", "Bold"):
     out = OUT / f"MercySerif-{weight}.otf"
     subset.save_font(font, str(out), opts)
     print(f"{out.name}: {len(text)} chars, {out.stat().st_size // 1024} KB")
+# Unity 按这个字符集把字体烘成静态图集（FontImportRules.cs）；动态字体在 WebGPU 上会丢字
+(OUT / "MercySerif.charset.txt").write_text(text, encoding="utf-8")
 (OUT / "OFL.txt").write_text("Noto Serif SC — Copyright 2017 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'.\n"
                              "Licensed under the SIL Open Font License, Version 1.1. https://openfontlicense.org\n"
                              "Subset by tools/fonts/make_font.py for Mercy Creek.\n", encoding="utf-8")

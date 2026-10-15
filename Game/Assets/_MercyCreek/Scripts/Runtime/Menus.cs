@@ -332,7 +332,7 @@ namespace MercyCreek
                 _rows[i].gameObject.SetActive(on);
                 if (!on) continue;
                 string label = _items[i].label();
-                _rows[i].text = i == _sel ? $"<b>▸ {label}</b>" : $"   <color=#b8a890>{label}</color>";
+                _rows[i].text = i == _sel ? $"<color=#ffe2a8>▸ {label}</color>" : $"   <color=#b8a890>{label}</color>";
             }
         }
     }
