@@ -1,71 +1,139 @@
 using System.Collections;
 using System.IO;
-using System.Linq;
 using UnityEngine;
 
 namespace MercyCreek
 {
     /// <summary>
-    /// 自动通关测试：`-autotest <截图目录>` 启动。
-    /// 每轮记住一个新碎片 → 快进到循环结束 → 场景重载后继续（本组件随场景重建，状态在 LoopMemory）。
-    /// 集齐后开上锁的门，等结局卡出现，截图并输出 PASS / FAIL。
+    /// 自动通关测试：`-autotest &lt;截图目录&gt; -ending awaken|escape|reset`。
+    /// 每轮做一件事（记一个碎片 / 走一段对话）→ 快进到循环末尾 → 场景重载后本组件重新 Start，进度在 LoopMemory。
+    /// 达成结局后截图，输出 `[AutoTest] PASS &lt;结局&gt;` 或 FAIL。
     /// </summary>
     public class AutoTest : MonoBehaviour
     {
         const int MaxLoops = 8;
+        string _dir;
 
         IEnumerator Start()
         {
-            string dir = Arg("-autotest");
-            if (dir == null) { enabled = false; yield break; }
-            Directory.CreateDirectory(dir);
+            _dir = Arg("-autotest");
+            if (_dir == null) { enabled = false; yield break; }
+            Directory.CreateDirectory(_dir);
+            string ending = Arg("-ending") ?? "awaken";
 
             var player = FindFirstObjectByType<FirstPersonController>();
             if (player) player.enabled = false;
             var director = FindFirstObjectByType<LoopDirector>();
-            var hud = FindFirstObjectByType<Hud>();
-            var all = FindObjectsByType<Interactable>(FindObjectsSortMode.None);
-            yield return new WaitForSeconds(2f);
+            var story = Story.I;
+            yield return new WaitForSeconds(1.5f);
+            int loop = LoopMemory.Loop;
+            Log($"[{ending}] loop {loop} start, fragments=[{string.Join(",", LoopMemory.Fragments)}]");
+            if (loop > MaxLoops) { Fail("too many loops"); yield break; }
 
-            Log($"loop {LoopMemory.Loop} start, fragments={LoopMemory.Fragments.Count}");
-
-            // 上锁的门：碎片够了就开
-            var locked = all.FirstOrDefault(i => i.requiredFragments > 0);
-            if (locked && LoopMemory.Fragments.Count >= locked.requiredFragments)
+            switch (ending)
             {
-                Log("open locked door: " + locked.Use().Replace("\n", " / "));
-                yield return new WaitForSeconds(8f);
-                ScreenCapture.CaptureScreenshot(Path.Combine(dir, "ending.png"));
-                yield return null;
-                Log(director && !director.enabled ? "PASS ending reached" : "FAIL director still running after ending");
-                yield return new WaitForSeconds(0.5f);
-                Application.Quit();
-                yield break;
+                case "awaken":
+                    // 碎片走不同的系统：对话（教授 / 格斯）、物件、需要前置碎片的物件
+                    if (loop == 1)
+                    {
+                        Log("room4 locked: " + story.Use("room4"));
+                        yield return SkipTo(director, 30f);
+                        Expect(story.HeardWrongNote, "heard wrong note by 30s");
+                        Log("prof: " + story.Choose("npc.prof", "d.prof.wrong"));
+                        Expect(LoopMemory.Has("piano"), "piano fragment via dialogue");
+                        Log("second fragment same loop: " + story.Use("clock"));
+                        Expect(!LoopMemory.Has("clock"), "only one fragment per loop");
+                    }
+                    else if (loop == 2)
+                    {
+                        yield return SkipTo(director, 20f);
+                        Log("gus: " + story.Choose("npc.gus", "d.gus.martha"));
+                        Expect(LoopMemory.Has("name"), "name fragment via Gus slip");
+                    }
+                    else if (loop == 3)
+                    {
+                        Log("letter before glass: " + story.Use("letter"));
+                        Expect(!LoopMemory.Has("letter"), "letter needs glass");
+                        Log(story.Use("glass"));
+                    }
+                    else if (loop == 4)
+                    {
+                        Log(story.Use("letter"));
+                        Expect(LoopMemory.Has("letter"), "letter fragment");
+                    }
+                    else
+                    {
+                        Log("room4: " + story.Use("room4"));
+                        yield return new WaitForSeconds(2.5f);
+                        Shot("room4_open");
+                        story.Use("typewriter");
+                        yield return WaitEnding("Awaken");
+                        yield break;
+                    }
+                    break;
+
+                case "escape":
+                    if (loop == 1) { Log(story.Use("door")); Log("backdoor: " + story.Use("backdoor")); }
+                    else if (loop == 2) Log(story.Use("calendar"));
+                    else
+                    {
+                        Log("backdoor: " + story.Use("backdoor"));
+                        yield return new WaitForSeconds(2f);
+                        Shot("backdoor_open");
+                        story.DebugEnterVoid();
+                        yield return WaitEnding("Escape");
+                        yield break;
+                    }
+                    break;
+
+                case "reset":
+                    if (loop == 1) Log(story.Use("clock"));
+                    else
+                    {
+                        yield return SkipTo(director, 100f);
+                        Expect(story.CraneSeated, "crane seated at 100s");
+                        Log("crane: " + story.Choose("npc.crane", "d.crane.writing"));
+                        Expect(LoopMemory.Has("notebook"), "notebook fragment via Crane");
+                        Log("crane: " + story.Choose("npc.crane", "d.crane.fine"));
+                        yield return WaitEnding("Reset");
+                        Expect(LoopMemory.Loop == 1 && LoopMemory.Fragments.Count == 0, "reset ending clears memory");
+                        yield break;
+                    }
+                    break;
             }
 
-            if (LoopMemory.Loop > MaxLoops) { Log("FAIL too many loops"); Application.Quit(); yield break; }
-
-            // 先验证"已用名额"分支：同一轮第二个碎片应被拒绝
-            var fresh = all.Where(i => !string.IsNullOrEmpty(i.fragmentId) && !LoopMemory.Has(i.fragmentId)).ToList();
-            if (locked) Log("locked door says: " + locked.Use());
-            if (fresh.Count > 0)
-            {
-                Log($"use {fresh[0].fragmentId}: " + fresh[0].Use().Replace("\n", " / "));
-                if (fresh.Count > 1)
-                {
-                    string second = fresh[1].Use();
-                    Log($"use {fresh[1].fragmentId} (same loop): " + second.Replace("\n", " / "));
-                    if (LoopMemory.Has(fresh[1].fragmentId)) Log("FAIL remembered two fragments in one loop");
-                }
-            }
-
-            // 快进到循环末尾，截一张重置特效
+            // 快进到循环末尾
             director.Skip(director.loopSeconds - 0.05f);
             yield return new WaitForSecondsRealtime(1.2f);
-            if (LoopMemory.Loop == 1) ScreenCapture.CaptureScreenshot(Path.Combine(dir, "reset.png"));
+            if (loop == 1 && ending == "awaken") Shot("reset");
         }
 
-        static void Log(string s) => Debug.Log("[AutoTest] " + s);
+        IEnumerator SkipTo(LoopDirector director, float t)
+        {
+            if (director.Elapsed < t) director.Skip(t);
+            yield return new WaitForSeconds(0.6f);   // 让快进补上的事件和 NPC 站位生效
+        }
+
+        IEnumerator WaitEnding(string expected)
+        {
+            var hud = FindFirstObjectByType<Hud>();
+            for (float t = 0; t < 20f && !hud.EndingShown; t += Time.deltaTime) yield return null;
+            Shot("ending_" + expected.ToLower());
+            yield return null;
+            ShareCard.Capture(Path.Combine(_dir, "share_" + expected.ToLower() + ".png"));
+            if (hud.EndingShown && LoopMemory.LastEnding == expected) Log($"PASS {expected} at loop {LoopMemory.Loop}");
+            else Fail($"ending {LoopMemory.LastEnding ?? "none"} shown={hud.EndingShown}, expected {expected}");
+            yield return new WaitForSeconds(0.5f);
+            Application.Quit();
+        }
+
+        void Shot(string name) => ScreenCapture.CaptureScreenshot(Path.Combine(_dir, name + ".png"));
+
+        static void Expect(bool ok, string what) { if (!ok) Debug.Log("[AutoTest] FAIL expect: " + what); else Log("ok: " + what); }
+
+        static void Fail(string why) { Debug.Log("[AutoTest] FAIL " + why); Application.Quit(); }
+
+        static void Log(string s) => Debug.Log("[AutoTest] " + (s ?? "(null)").Replace("\n", " / "));
 
         static string Arg(string name)
         {

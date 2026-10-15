@@ -118,7 +118,10 @@ namespace MercyCreek.EditorTools
             reset.sharedProfile = ResetProfile();
 
             // ---------- HUD / 玩家 ----------
+            var uiFont = AssetDatabase.LoadAssetAtPath<Font>(Root + "/Resources/Fonts/MercySerif-Regular.otf")
+                         ?? throw new Exception("missing font（先跑 .venv/bin/python tools/fonts/make_font.py）");
             var hud = new GameObject("HUD").AddComponent<Hud>();
+            hud.font = uiFont;
 
             var player = new GameObject("Player");
             player.transform.SetPositionAndRotation(new Vector3(-5.85f, 0.05f, 4.6f), Quaternion.Euler(0, 75, 0));
@@ -146,40 +149,77 @@ namespace MercyCreek.EditorTools
             var loop = new GameObject("Loop Director").AddComponent<LoopDirector>();
             loop.sun = sun; loop.lamps = lamps.ToArray(); loop.resetVolume = reset; loop.hud = hud;
 
-            // ---------- 交互点（记忆碎片）----------
-            Interact(saloon, "vintage_grandfather_clock_01_root", "看那座钟", "clock",
-                "落地钟停在三点整。你从来没见过它走动。", "三点整。永远是三点整。");
-            Interact(saloon, "ornate_mirror_01_root", "看镜子", "mirror",
-                "镜子里的你眨了一下眼——比你慢了半拍。", "你不敢再看镜子太久。");
-            Interact(saloon, "PlayerPiano_Blockout", "听钢琴", "piano",
-                "琴键自己在动。纸卷上的每一个孔，你闭着眼都能背出来。", "这首曲子只有一种结尾。你从没听到过结尾。");
-            Interact(saloon, "dartboard", "看飞镖靶", null, "三支飞镖扎在同一个洞里。每天都是。", null);
-            Interact(saloon, "wine_bottles_01_root", "看酒瓶", null, "标签上的字你每天都读，却从来想不起写的是什么。", null);
+            // ---------- 外景、钢琴、道具、人偶、剧情 ----------
+            var street = PlaceGlb("Art/Street/StreetBackdrop.glb", "Street Backdrop", Vector3.zero, 180, false);
+            foreach (var r in street.GetComponentsInChildren<MeshRenderer>()) r.receiveGI = ReceiveGI.LightProbes;
+
+            var piano = PlaceGlb("Art/Props/PlayerPiano.glb", "Player Piano", new Vector3(3.2f, 0, 9.65f), 180, true);
+            var stool = Find(piano, "PianoStool");
+            var stoolBounds = WorldBounds(stool.gameObject);
+
+            var story = new GameObject("Story").AddComponent<Story>();
+            story.director = loop; story.hud = hud; story.player = player.transform;
+            story.profSeat = new Vector3(stoolBounds.center.x, 0, stoolBounds.center.z + 0.06f);
+            story.clock = Find(saloon, "vintage_grandfather_clock_01_root");
+
+            story.gus = MakeNpc("Gus", "npc.gus", "name.gus", 13f);
+            story.prof = MakeNpc("Professor", "npc.prof", "name.prof", 15f);
+            story.prof.rig.seatHeight = stoolBounds.max.y;
+            story.crane = MakeNpc("Crane", "npc.crane", "name.crane", 24f);
+            story.crane.rig.seatHeight = 0.46f;
+            story.crane.walkSpeed = 1.15f;
+
+            // 物件碎片
+            Interact(saloon, "vintage_grandfather_clock_01_root", "clock");
+            Interact(saloon, "ornate_mirror_01_root", "mirror");
+            Interact(saloon, "dartboard_root", "dartboard");
+            Interact(saloon, "wine_bottles_01_root", "bottles");
+            float barTop = WorldBounds(Find(saloon, "BarTop").gameObject).max.y;
+            var glass = PlaceGlb("Art/Props/WhiskeyGlass.glb", "Chipped Glass", new Vector3(-4.8f, barTop, 4.35f), 0, false);
+            InteractBox(glass, "glass", 0.12f);
+            var calendar = PlaceGlb("Art/Props/Calendar.glb", "Calendar", new Vector3(-5.5f, 1.4f, 0.02f), 0, false);
+            InteractBox(calendar, "calendar", 0.08f);
+            float backBarTop = WorldBounds(Find(saloon, "BackBarTop").gameObject).max.y;
+            story.letter = PlaceGlb("Art/Props/Letter.glb", "Letter", new Vector3(-6.62f, backBarTop, 4.1f), 75, false);
+            var drawer = new GameObject("Interact Drawer");
+            drawer.transform.position = new Vector3(-6.62f, 0.72f, 4.1f);
+            var dbox = drawer.AddComponent<BoxCollider>(); dbox.isTrigger = true; dbox.size = new Vector3(0.7f, 0.55f, 0.9f);
+            drawer.AddComponent<Interactable>().id = "letter";
+
+            // 陌生人的窗边桌（build_saloon.py 里 round_wooden_table_02 在 (-3.0, 1.9)）
+            var craneTable = saloon.GetComponentsInChildren<Transform>()
+                .Where(t => t.name.StartsWith("round_wooden_table_02") && t.name.EndsWith("_root"))
+                .OrderBy(t => Vector3.Distance(t.position, new Vector3(-3f, 0, 1.9f))).First();
+            float tableTop = WorldBounds(craneTable.gameObject).max.y;
+            story.notebook = PlaceGlb("Art/Props/Notebook.glb", "Crane Notebook", new Vector3(-3.0f, tableTop, 1.58f), 180, false);
+            InteractBox(story.notebook, "notebook", 0.1f);
 
             // 前门：挡住，只能看
             var door = new GameObject("Front Door");
             door.transform.position = new Vector3(0, 1.35f, 0.1f);
             door.AddComponent<BoxCollider>().size = new Vector3(1.8f, 2.7f, 0.3f);
-            var di = door.AddComponent<Interactable>();
-            di.prompt = "推门"; di.fragmentId = "door";
-            di.firstText = "门外的街道在阳光里一动不动，像一幅画。你没有迈出去。";
-            di.rememberedText = "你知道外面什么都没有。";
+            door.AddComponent<Interactable>().id = "door";
 
-            // 二楼上锁的房间：集齐 4 个碎片才开
-            var lockedDoor = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            lockedDoor.name = "Locked Door";
-            lockedDoor.transform.position = new Vector3(0, 3.2f + 1.15f, 9.96f);
-            lockedDoor.transform.localScale = new Vector3(1.2f, 2.3f, 0.08f);
+            // 二楼 4 号房 + 后门：可开的门
             var doorMat = FindMaterial(saloon, "BarBody");
-            if (doorMat) lockedDoor.GetComponent<MeshRenderer>().sharedMaterial = doorMat;
-            var li = lockedDoor.AddComponent<Interactable>();
-            li.prompt = "开门"; li.requiredFragments = 4; li.isEnding = true;
-            li.lockedText = "门锁着。门缝里有很轻的、规律的咔哒声，像打字机。";
-            li.firstText = "门开了。屋里只有一张桌子，桌上摊着一叠打印出来的剧本。\n第一页写着：《Mercy Creek》—— 第 {loop} 稿，由 AI 生成。";
+            story.room4Door = MakeDoor("Room 4 Door", new Vector3(-0.6f, 3.2f, 10.1f), 1.2f, 2.3f, doorMat, "room4");
+            story.backDoor = MakeDoor("Back Door", new Vector3(5.6f, 0f, 10.1f), 1.0f, 2.3f, doorMat, "backdoor");
+
+            // 4 号房：书桌 + 自己在打字的打字机
+            var desk = PlaceGlb("Art/Props/Desk.glb", "Room 4 Desk", new Vector3(0.3f, 3.2f, 12.6f), 180, true);
+            var deskTop = WorldBounds(Find(desk, "Desk").gameObject);
+            var typewriter = PlaceGlb("Art/Props/Typewriter.glb", "Typewriter", new Vector3(deskTop.center.x, deskTop.max.y, deskTop.center.z + 0.05f), 180, false);
+            story.typewriterPaper = Find(typewriter, "Paper") ?? typewriter.transform;
+            InteractBox(typewriter, "typewriter", 0.25f);
+            PointLight("Room 4 Lamp", new Vector3(0.6f, 4.6f, 12.2f), 4f, new Color(1f, 0.7f, 0.42f), true).intensity = 1.2f;
+
+            // 出逃结局的"虚空"：后门外一个没有前墙的大盒子，铺满网格
+            story.voidRoot = MakeVoid();
 
             // ---------- 评审机位 ----------
             var shots = new GameObject("Review Viewpoints").transform;
             var autoShot = shots.gameObject.AddComponent<AutoShot>();
+            autoShot.loopTimes = new[] { 8f, 75f, 150f };
             shots.gameObject.AddComponent<AutoTest>();
             autoShot.viewpoints = new[]
             {
@@ -187,11 +227,23 @@ namespace MercyCreek.EditorTools
                 Viewpoint(shots, "balcony", new Vector3(5.6f, 4.8f, 8.4f), new Vector3(-2f, 0.6f, 3f)),
                 Viewpoint(shots, "bar", new Vector3(-2.7f, 1.45f, 2.2f), new Vector3(-6.7f, 1.3f, 6.5f)),
                 Viewpoint(shots, "shafts", new Vector3(4.3f, 1.7f, 8.0f), new Vector3(-2.5f, 0.6f, 1.5f)),
+                Viewpoint(shots, "corner", new Vector3(-2.2f, 1.45f, 3.6f), new Vector3(-3.0f, 0.95f, 1.2f)),
+                Viewpoint(shots, "piano", new Vector3(1.4f, 1.55f, 7.0f), new Vector3(3.2f, 1.0f, 9.4f)),
+                Viewpoint(shots, "debug_side", new Vector3(-1.0f, 1.3f, 1.3f), new Vector3(-3.0f, 0.8f, 1.4f)),
             };
 
             // 探针只放在室内（墙内侧），否则墙外被天光照亮的探针会沿墙根漏光
             ProbeVolumeAt("APV Hall", new Vector3(0, 3.2f, 5f), new Vector3(13.9f, 6.35f, 9.9f));
             ProbeVolumeAt("APV Room 4", new Vector3(0, 4.7f, 11.7f), new Vector3(3.9f, 2.9f, 2.9f));
+
+            // ---------- 菜单（标题画面镜头、分享卡片底图机位） ----------
+            var menus = new GameObject("Menus").AddComponent<Menus>();
+            menus.font = uiFont;
+            var cams = new GameObject("Menu Cameras").transform;
+            menus.titleCameraFrom = Viewpoint(cams, "Title From", new Vector3(-0.6f, 1.7f, 0.9f), new Vector3(0.8f, 1.6f, 9f));
+            menus.titleCameraTo = Viewpoint(cams, "Title To", new Vector3(0.4f, 2.2f, 3.8f), new Vector3(0.8f, 1.6f, 9f));
+            menus.titleLookAt = Viewpoint(cams, "Title Look", new Vector3(0.8f, 1.5f, 9f), new Vector3(0.8f, 1.5f, 10f));
+            menus.shareViewpoint = Viewpoint(cams, "Share Card", new Vector3(5.2f, 4.7f, 2.4f), new Vector3(-2.2f, 1.0f, 6.5f));
 
             EditorSceneManager.SaveScene(scene, ScenePath);
             EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };
@@ -508,18 +560,127 @@ namespace MercyCreek.EditorTools
             return t;
         }
 
-        static void Interact(GameObject saloon, string objectName, string prompt, string fragment, string first, string remembered)
+        static void Interact(GameObject saloon, string objectName, string id)
         {
-            var t = saloon.GetComponentsInChildren<Transform>().FirstOrDefault(x => x.name == objectName);
+            var t = Find(saloon, objectName);
             if (!t) { Debug.LogWarning("[SetupSaloon] interactable target not found: " + objectName); return; }
             var b = WorldBounds(t.gameObject);
-            var go = new GameObject("Interact " + objectName);
+            var go = new GameObject("Interact " + id);
             go.transform.position = b.center;
             var box = go.AddComponent<BoxCollider>();
             box.isTrigger = true;
             box.size = b.size + Vector3.one * 0.1f;
-            var i = go.AddComponent<Interactable>();
-            i.prompt = prompt; i.fragmentId = fragment; i.firstText = first; i.rememberedText = remembered;
+            go.AddComponent<Interactable>().id = id;
+        }
+
+        static void InteractBox(GameObject target, string id, float pad)
+        {
+            var b = WorldBounds(target);
+            var box = target.AddComponent<BoxCollider>();
+            box.isTrigger = true;
+            box.center = target.transform.InverseTransformPoint(b.center);
+            box.size = b.size + Vector3.one * pad;
+            target.AddComponent<Interactable>().id = id;
+        }
+
+        static Transform Find(GameObject root, string name) =>
+            root.GetComponentsInChildren<Transform>(true).FirstOrDefault(x => x.name == name);
+
+        static GameObject PlaceGlb(string relPath, string name, Vector3 pos, float yaw, bool colliders)
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<GameObject>($"{Root}/{relPath}") ?? throw new Exception("missing " + relPath + "（先跑 tools/bootstrap.sh）");
+            var go = (GameObject)PrefabUtility.InstantiatePrefab(asset);
+            go.name = name;
+            go.transform.SetPositionAndRotation(pos, Quaternion.Euler(0, yaw, 0));
+            foreach (var r in go.GetComponentsInChildren<MeshRenderer>())
+            {
+                if (colliders) r.gameObject.AddComponent<MeshCollider>().sharedMesh = r.GetComponent<MeshFilter>().sharedMesh;
+                if (r.sharedMaterials.Any(m => m && m.name.ToLower().Contains("glass"))) r.shadowCastingMode = ShadowCastingMode.Off;
+            }
+            return go;
+        }
+
+        static Npc MakeNpc(string file, string id, string nameKey, float stride)
+        {
+            var go = PlaceGlb($"Art/Characters/Mannequin_{file}.glb", file, Vector3.zero, 0, false);
+            var rig = go.AddComponent<MannequinRig>();
+            rig.stride = stride;
+            var npc = go.AddComponent<Npc>();
+            npc.id = id; npc.nameKey = nameKey; npc.rig = rig;
+            var cap = go.AddComponent<CapsuleCollider>();
+            cap.center = new Vector3(0, 0.9f, 0); cap.height = 1.8f; cap.radius = 0.3f;
+            go.AddComponent<Interactable>().id = id;
+            return npc;
+        }
+
+        static SwingDoor MakeDoor(string name, Vector3 hinge, float width, float height, Material mat, string id)
+        {
+            var root = new GameObject(name);
+            root.transform.position = hinge;
+            var panel = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            panel.name = name + " Panel";
+            panel.transform.SetParent(root.transform, false);
+            panel.transform.localPosition = new Vector3(width / 2, height / 2, 0);
+            panel.transform.localScale = new Vector3(width - 0.02f, height - 0.02f, 0.06f);
+            if (mat) panel.GetComponent<MeshRenderer>().sharedMaterial = mat;
+            panel.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.TwoSided;
+            panel.AddComponent<Interactable>().id = id;
+            var knob = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            knob.name = "Knob";
+            UnityEngine.Object.DestroyImmediate(knob.GetComponent<Collider>());
+            knob.transform.SetParent(root.transform, false);
+            knob.transform.localPosition = new Vector3(width - 0.12f, 1.0f, -0.05f);
+            knob.transform.localScale = Vector3.one * 0.06f;
+            var brass = AssetDatabase.LoadAllAssetsAtPath($"{Root}/Art/Saloon/Saloon.glb").OfType<Material>().FirstOrDefault(m => m.name == "Brass");
+            if (brass) knob.GetComponent<MeshRenderer>().sharedMaterial = brass;
+            var d = root.AddComponent<SwingDoor>();
+            d.openAngle = -100f;
+            return d;
+        }
+
+        static GameObject MakeVoid()
+        {
+            const float x0 = 2.4f, x1 = 40f, y0 = 0.01f, y1 = 25f, z0 = 10.25f, z1 = 45f;
+            Vector3[] v =
+            {
+                // 地面、顶、后、左、右（没有朝向酒馆的那一面）
+                new Vector3(x0, y0, z0), new Vector3(x1, y0, z0), new Vector3(x1, y0, z1), new Vector3(x0, y0, z1),
+                new Vector3(x0, y1, z0), new Vector3(x1, y1, z0), new Vector3(x1, y1, z1), new Vector3(x0, y1, z1),
+            };
+            var mesh = new Mesh { name = "Void Box" };
+            var verts = new List<Vector3>(); var tris = new List<int>(); var normals = new List<Vector3>();
+            void Quad(int a, int b, int c, int d, Vector3 n)
+            {
+                int i = verts.Count;
+                verts.AddRange(new[] { v[a], v[b], v[c], v[d] }); normals.AddRange(new[] { n, n, n, n });
+                tris.AddRange(new[] { i, i + 1, i + 2, i, i + 2, i + 3 });
+            }
+            Quad(0, 1, 2, 3, Vector3.up); Quad(4, 7, 6, 5, Vector3.down);
+            Quad(3, 2, 6, 7, Vector3.back); Quad(0, 3, 7, 4, Vector3.right); Quad(1, 5, 6, 2, Vector3.left);
+            // 朝酒馆的那一面：酒馆后墙（x ≤ 7.2、高 6.6）以外的部分也要封上，否则看得到外面的沙漠
+            int n0 = v.Length;
+            v = v.Concat(new[]
+            {
+                new Vector3(7.2f, y0, z0), new Vector3(7.2f, y1, z0), new Vector3(x0, 6.6f, z0), new Vector3(7.2f, 6.6f, z0),
+            }).ToArray();
+            Quad(n0, 1, 5, n0 + 1, Vector3.forward);            // x 7.2..40 整面
+            Quad(n0 + 2, n0 + 3, n0 + 1, 4, Vector3.forward);   // x 2.4..7.2，屋顶以上
+            mesh.SetVertices(verts); mesh.SetNormals(normals); mesh.SetTriangles(tris, 0); mesh.RecalculateBounds();
+            const string meshPath = Root + "/Materials/VoidBox.asset";
+            AssetDatabase.DeleteAsset(meshPath);
+            AssetDatabase.CreateAsset(mesh, meshPath);
+
+            var go = new GameObject("Void", typeof(MeshFilter), typeof(MeshRenderer));
+            go.GetComponent<MeshFilter>().sharedMesh = mesh;
+            const string matPath = Root + "/Materials/VoidGrid.mat";
+            var mat = AssetDatabase.LoadAssetAtPath<Material>(matPath);
+            if (!mat) { mat = new Material(Shader.Find("MercyCreek/VoidGrid")); AssetDatabase.CreateAsset(mat, matPath); }
+            var r = go.GetComponent<MeshRenderer>();
+            r.sharedMaterial = mat; r.shadowCastingMode = ShadowCastingMode.Off; r.receiveShadows = false;
+            var floor = go.AddComponent<BoxCollider>();
+            floor.center = new Vector3((x0 + x1) / 2, -0.05f, (z0 + z1) / 2);
+            floor.size = new Vector3(x1 - x0, 0.1f, z1 - z0);
+            return go;
         }
 
         static Bounds WorldBounds(GameObject go)

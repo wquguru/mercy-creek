@@ -12,6 +12,7 @@ namespace MercyCreek
         public float fastSpeed = 2.8f;
         public float lookSensitivity = 0.08f;
         public float gravity = 9.8f;
+        public bool invertY;
 
         public bool InputLocked { get; set; }
 
@@ -25,7 +26,7 @@ namespace MercyCreek
             if (head) _headRest = head.localPosition;
         }
 
-        void OnEnable() => SetCursor(true);
+        void OnEnable() { if (!Menus.Blocking) SetCursor(true); }
         void OnDisable() => SetCursor(false);
 
         static void SetCursor(bool locked)
@@ -40,17 +41,17 @@ namespace MercyCreek
             var mouse = Mouse.current;
             if (kb == null || mouse == null) return;
 
-            if (kb.escapeKey.wasPressedThisFrame) SetCursor(false);
-            if (mouse.leftButton.wasPressedThisFrame && Cursor.lockState != CursorLockMode.Locked) SetCursor(true);
+            // Esc 由 Menus 处理（暂停）；网页版里浏览器可能自己释放鼠标，点一下重新锁定
+            if (!Menus.Blocking && mouse.leftButton.wasPressedThisFrame && Cursor.lockState != CursorLockMode.Locked) SetCursor(true);
 
             Vector2 move = Vector2.zero;
-            if (!InputLocked)
+            if (!InputLocked && !Menus.Blocking)
             {
                 if (Cursor.lockState == CursorLockMode.Locked)
                 {
                     Vector2 d = mouse.delta.ReadValue() * lookSensitivity;
                     transform.Rotate(0f, d.x, 0f);
-                    _pitch = Mathf.Clamp(_pitch - d.y, -80f, 80f);
+                    _pitch = Mathf.Clamp(_pitch + (invertY ? d.y : -d.y), -80f, 80f);
                     if (head) head.localRotation = Quaternion.Euler(_pitch, 0f, 0f);
                 }
                 if (kb.wKey.isPressed) move.y += 1;

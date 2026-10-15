@@ -84,8 +84,10 @@ namespace MercyCreek
 
         public void PlayMusic(AudioClip clip, bool loop = false)
         {
-            _music.clip = clip; _music.loop = loop; _music.volume = MusicVolume; _music.Play();
+            _music.clip = clip; _music.loop = loop; _music.volume = 0.8f * MusicVolume; _music.Play();
         }
+
+        public void StopMusic(float fade = 1f) { if (_music.isPlaying) StartCoroutine(FadeOut(_music, fade)); }
 
         public void Play2D(AudioClip clip, float volume = 1f)
         {

@@ -263,13 +263,10 @@ for sx in (-3.4, 0.6, 4.6):
     box(f"SconceFlame{sx}", sx - 0.012, sx + 0.012, DEPTH - 0.312, DEPTH - 0.288, 2.14, 2.2, M["flame"], col="Props")
 
 # 自动钢琴（Tripo 之前的占位）
-PIANO = (3.2, DEPTH - 0.35)
-box("PlayerPiano_Blockout", PIANO[0] - 0.78, PIANO[0] + 0.78, PIANO[1] - 0.32, PIANO[1] + 0.3, 0, 1.32, M["piano"], col="Props")
+# 自动钢琴：tools/blender/build_piano.py 单独生成 PlayerPiano.glb，由 SetupSaloon 放在 (3.2, 0, DEPTH - 0.35)
 
 # ---------- 外景：对街立面，窗外不是空的 ----------
-box("Street", -40, 40, -30, -0.2, -0.25, -0.2, M["sand"], col="Exterior")
-for i, (x, h) in enumerate([(-11, 5.5), (-4, 6.5), (3, 5.0), (10, 7.0)]):
-    box(f"Facade{i}", x - 3.2, x + 3.2, -16, -15.6, 0, h, M["siding"], col="Exterior")
+# 对街立面、街道：tools/blender/build_street.py → StreetBackdrop.glb（同一坐标系）
 box("BoardwalkFront", X0 - 1, X1 + 1, -2.4, -0.2, 0, 0.25, M["floor"], col="Exterior")
 box("Awning", X0 - 1, X1 + 1, -2.6, 0, 3.7, 3.8, M["trim"], col="Exterior")
 box("OutsideL", -40, X0 - T, 0, 30, -0.25, -0.2, M["sand"], col="Exterior")
@@ -329,6 +326,11 @@ for tx, ty, t in tables:
         a = math.radians(45 + k * 90 + (tx * 10))
         prop("painted_wooden_chair_02", tx + math.cos(a) * 0.8, ty + math.sin(a) * 0.8, rot_deg=math.degrees(a) + 90)
     prop("wooden_lantern_01" if ty > 6 else "Lantern_01", tx + 0.1, ty - 0.05, z=top)
+
+# 窗边的角落桌：陌生人每轮坐在这里写笔记（Story.CraneSeat）
+_, csz = prop("round_wooden_table_02", -3.0, 1.9, rot_deg=10)
+prop("painted_wooden_chair_02", -3.0, 1.08, rot_deg=180)   # 模型正面朝 -Y，转过来面向桌子
+prop("Lantern_01", -3.35, 2.1, z=csz.z)
 
 # 吧台：高脚凳、酒瓶、镜子
 for i in range(6):

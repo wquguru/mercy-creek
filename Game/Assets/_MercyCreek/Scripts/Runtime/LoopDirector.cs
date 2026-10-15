@@ -24,18 +24,7 @@ namespace MercyCreek
         public float sunIntensityStart = 3.2f, sunIntensityEnd = 1.6f;
         public float lampIntensityStart = 0.4f, lampIntensityEnd = 2.2f;
 
-        // 每轮同样的时间点发生同样的事。占位剧本，NPC 做好后换成真实事件。
-        static readonly (float t, string line)[] Script =
-        {
-            (4f,   "下午三点。钢琴开始弹那首曲子。"),
-            (40f,  "你擦着同一个杯子。杯沿有一道你很熟悉的缺口。"),
-            (75f,  "门被推开。一个陌生人走进来，靴子上全是土。"),
-            (120f, "陌生人在角落坐下，要了一杯威士忌。他一直在看那座钟。"),
-            (160f, "光线变红了。你突然很想记住点什么。"),
-        };
-
         float _t;
-        int _next;
         bool _resetting;
 
         public float Elapsed => _t;
@@ -45,22 +34,22 @@ namespace MercyCreek
 
         IEnumerator Start()
         {
-            if (LoopMemory.Loop > 1) hud.Say($"<i>……又是这个下午。</i>", 4f);
-            Invoke(nameof(StartPiano), 3f);
+            if (LoopMemory.Loop > 1) hud.Say(Loc.T("ui.again"), 4f);
+            if (LoopMemory.Started) LoopMemory.Save();
             ApplyTime(0f);
             for (float f = 1; f > 0; f -= Time.deltaTime / 1.6f) { hud.Fade = f; yield return null; }
             hud.Fade = 0;
         }
 
+        bool _pianoStarted;
+
         void Update()
         {
-            if (_resetting) return;
+            if (_resetting || !LoopMemory.Started) return;
             _t += Time.deltaTime;
+            if (!_pianoStarted && _t >= Story.WaltzStart) { _pianoStarted = true; StartPiano(); }
             LoopMemory.TotalSeconds += Time.deltaTime;
             ApplyTime(Mathf.Clamp01(_t / loopSeconds));
-
-            while (_next < Script.Length && _t >= Script[_next].t)
-                hud.Say(Script[_next++].line, 6f);
 
             if (_t >= loopSeconds) StartCoroutine(ResetLoop());
         }
@@ -97,7 +86,7 @@ namespace MercyCreek
             _resetting = true;
             var player = FindFirstObjectByType<FirstPersonController>();
             if (player) player.InputLocked = true;
-            hud.Say("<i>……</i>", 3f);
+            hud.Say(Loc.T("ui.ellipsis"), 3f);
             if (Sfx.I) { Sfx.I.StopPiano(1.2f); Sfx.I.FadeAmbience(0f, 1.5f); Sfx.I.Play2D(Sfx.I.resetSting, 0.9f); }
             // 世界先冻结褪色，再黑场
             for (float w = 0; w < 1; w += Time.unscaledDeltaTime / 1.8f)

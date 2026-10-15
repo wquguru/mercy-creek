@@ -38,12 +38,25 @@ GLB 导入后根节点绕 Y 转 180°，于是 **Unity (x, y, z) = Blender (x, z
 | PlayerInteractor + Interactable | 准星交互，E 或左键；碎片、上锁门、结局 |
 | Hud | 代码搭的 uGUI：循环数、提示、字幕、黑场、结局卡 |
 | LightShaft | 沿太阳方向平移窗口矩形叠 28 张切片，additive + 深度软相交 + 窗棂遮挡 + 浮尘噪声 |
-| AutoShot / AutoTest | `-autoshot <dir>` 固定机位截图；`-autotest <dir>` 自动通关并输出 PASS/FAIL |
+| Story | 剧本唯一实现：每轮时间表（按 LoopDirector.Elapsed 触发，快进时以 instant 补上）、10 个碎片、对话选项、三个结局 |
+| Loc | 文本表（中 / 英），所有给玩家看的字都从这里取 |
+| Npc + MannequinRig | 人偶角色：沿路点走（含楼梯）、到点换姿势、看人、说话；程序动画按 docs/mannequin_rig.md 的轴向写角度，步伐相位跟实际位移走 |
+| SwingDoor | 4 号房门、后门 |
+| Sfx | 全部声音；钢琴按轮数换错音版本 |
+| Menus + Settings | 标题（独立相机缓推）、暂停、设置（灵敏度 / 反转 Y / 音量 / 语言）、结局后按钮；没有 EventSystem，自己处理鼠标键盘 |
+| ShareCard | 1200×630 分享卡片：离屏相机 + Screen Space Camera 画布，Mac 存桌面，Web 用 jslib 下载 |
+| LoopMemory | 另含存档（PlayerPrefs，每轮开始自动存，结局清除） |
+| AutoShot / AutoTest | `-autoshot <dir>` 固定机位截图（`-debug` / `-only` / `-times`）；`-autotest <dir> -ending awaken\|escape\|reset` 自动通关；`-titleshot <png>` 标题与设置画面；`-lang zh\|en` |
+
+## 光照
+- 间接光全部走 **APV**（Adaptive Probe Volumes），烘两个情景：Afternoon（循环开始）、Dusk（循环结束），运行时 `LoopDirector` 按进度混合。静态网格 `receiveGI = LightProbes`，不烘光照贴图（太阳会动）
+- 太阳和油灯是 Mixed（直接光实时，间接光进 APV）；墙、梁双面投影，避免薄墙被法线偏移穿透漏光
+- 探针只放在室内（`APV Hall` / `APV Room 4`），反射探针盒必须完整包住房间（否则盒外表面反射天空盒，发灰发亮）
 
 ## 已知问题 / 待办
-- 中文字体用的是系统字体（`Font.CreateDynamicFontFromOSFont`），Web 版没有系统字体 → 换 TextMeshPro + 思源黑体子集
-- 构建 1.7GB：贴图未压缩、GLB 里 93 张 2K 图。上线前做贴图压缩（ASTC/BC7）、降到 1K、Addressables 分包
-- 没有烘焙 GI：靠 Trilight 环境光 + 无阴影补光凑。下一步用 Adaptive Probe Volumes 烘焙
-- 没有 NPC、没有音频；剧情事件目前只是字幕
-- 自动钢琴是方块占位（等 Tripo）
+- 构建 2.4GB：贴图未压缩、人偶 GLB 各自带一份 2K 木纹。上线前做贴图压缩、降到 1K、去重
+- 角色衣服是刚体壳，长裙 / 围裙不跟腿动，步幅受限
+- 人偶没有手持道具（倒酒、写字只是手势）
+- 镜子不反射（"镜中人偶"只靠文字）
+- 前墙内侧、天花板在午后仍略偏冷灰
 - Web（WebGPU）构建未验证

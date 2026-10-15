@@ -27,6 +27,45 @@ namespace MercyCreek
             return true;
         }
 
+        /// <summary>上一次达成的结局（Story.Ending 的名字），给标题画面 / 分享卡片用。</summary>
+        public static string LastEnding { get; set; }
+
+        /// <summary>重置结局：一切归零，从第 1 稿重新开始。</summary>
+        public static void Clear()
+        {
+            Loop = 1; TotalSeconds = 0; RememberedThisLoop = false; _fragments.Clear();
+        }
+
+        /// <summary>标题画面按过"开始 / 继续"之后为 true；评审 / 测试启动时直接为 true。</summary>
+        public static bool Started { get; set; }
+
+        // ---------- 存档：每轮开始时自动保存，结局后清除 ----------
+        const string SaveKey = "save.v1";
+
+        [System.Serializable]
+        class SaveData { public int loop; public float total; public string[] fragments; }
+
+        public static bool HasSave => PlayerPrefs.HasKey(SaveKey);
+
+        public static int SavedLoop => HasSave ? JsonUtility.FromJson<SaveData>(PlayerPrefs.GetString(SaveKey)).loop : 0;
+
+        public static void Save()
+        {
+            if (Loop <= 1 && _fragments.Count == 0) return;
+            PlayerPrefs.SetString(SaveKey, JsonUtility.ToJson(new SaveData { loop = Loop, total = TotalSeconds, fragments = _fragments.ToArray() }));
+            PlayerPrefs.Save();
+        }
+
+        public static void Load()
+        {
+            if (!HasSave) return;
+            var d = JsonUtility.FromJson<SaveData>(PlayerPrefs.GetString(SaveKey));
+            Loop = Mathf.Max(1, d.loop); TotalSeconds = d.total; RememberedThisLoop = false;
+            _fragments.Clear(); _fragments.AddRange(d.fragments ?? new string[0]);
+        }
+
+        public static void DeleteSave() { PlayerPrefs.DeleteKey(SaveKey); PlayerPrefs.Save(); }
+
         public static void NextLoop()
         {
             Loop++;
@@ -37,7 +76,7 @@ namespace MercyCreek
         static void ResetForPlayMode()
         {
             // 编辑器关掉域重载时，静态数据会残留到下一次 Play
-            Loop = 1; TotalSeconds = 0; RememberedThisLoop = false; _fragments.Clear();
+            Clear(); LastEnding = null; Started = false;
         }
     }
 }

@@ -26,3 +26,11 @@
 - 决定：《Mercy Creek 华尔兹》用 F# 大调、3/4、112 BPM、36 小节（57.857 s）；错音放在 A' 段第 4 小节（V 和弦 C# 上三拍长的 G#4，24.11 s）。错音版本把这个音换成 C5 / A4 / G4 / E4（各取离 G#4 最近的八度）。同一处在 11.25 s 先弹对一次，让耳朵先记住"本来的样子"
 - 理由：C# 大三和弦（C#–E#–G#）与 C、A、G、E 各差半音，四个错音都必然刺耳；半终止的长音最容易被注意到
 - 替代：换调或换位置只需改 `tools/audio/piano.py` 的 `CHORDS / MELODY / SPOT_BAR / WRONG`，再同步 `docs/audio_waltz.md` 和游戏里的字幕时间
+
+## 2026-10-15 · 钢琴 / 人偶 / 道具 / 街景全部脚本建模
+- 决定：自动钢琴、4 个木头人偶、打字机等道具、窗外街景都用 Blender 脚本程序化建模（`tools/blender/build_{piano,mannequin,props,street}.py`），贴图只用 ambientCG CC0 + Pillow 生成的文字贴图（Rye，SIL OFL）。产物 GLB 和 Saloon.glb 一样不进 Git，由 `tools/bootstrap.sh` 重建（重建结果逐字节相同）
+- 人偶：层级即骨架，每段原点在关节、静止旋转为单位、手臂下垂外展 8°；在要求的节点名之外多了 `L_/R_FingersTip`（四指第二节，握杯 / 弹琴用）；内尔加了一个深棕发髻，让无脸人偶在镜子里能认出是她；人偶木纹贴图 2K，其余 1K
+- 衣服是刚性壳：长裙 / 围裙挂在 Hips 上，步幅大了会被腿顶穿（限制写在 `docs/mannequin_rig.md`）
+- 没做 Mirror.glb：酒馆已用 Poly Haven `ornate_mirror_01`
+- 理由：没有 Tripo Key；全脚本可复现、授权干净；木偶风格本身是剧情线索
+- 替代：拿到 Tripo / 写实角色后替换；衣服改成蒙皮布料

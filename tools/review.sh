@@ -24,14 +24,28 @@ kill $PID 2>/dev/null
 grep -E 'Exception|\[AutoShot\]' "$P/Logs/player.log" | head -20
 ls "$R"
 
-# 自动通关测试：tools/review.sh --no-setup --no-build 之后单独跑也行
-if [[ " $* " == *" --test "* ]]; then
-  echo "== autotest"
-  T=$ROOT/Reviews/autotest; rm -rf "$T"; mkdir -p "$T"
-  "$P/Builds/Mac/MercyCreek.app/Contents/MacOS/Mercy Creek" -autotest "$T" -screen-width 1600 -screen-height 900 -screen-fullscreen 0 -logFile - > "$P/Logs/autotest.log" 2>&1 &
+# 标题画面（中 / 英）
+for L in zh en; do
+  "$P/Builds/Mac/MercyCreek.app/Contents/MacOS/Mercy Creek" -titleshot "$R/title_$L.png" -lang $L -screen-width 1600 -screen-height 900 -screen-fullscreen 0 -logFile - > "$P/Logs/title_$L.log" 2>&1 &
   PID=$!
-  for i in {1..240}; do sleep 1; kill -0 $PID 2>/dev/null || break; done
+  for i in {1..40}; do sleep 1; kill -0 $PID 2>/dev/null || break; done
   kill $PID 2>/dev/null
-  grep -E 'Exception|\[AutoTest\]' "$P/Logs/autotest.log" | head -40
+  grep -E 'Exception' "$P/Logs/title_$L.log" | head -5
+done
+
+# 自动通关测试：三个结局各跑一遍
+if [[ " $* " == *" --test "* ]]; then
+  T=$ROOT/Reviews/autotest; rm -rf "$T"; mkdir -p "$T"
+  FAILED=0
+  for E in awaken escape reset; do
+    echo "== autotest $E"
+    "$P/Builds/Mac/MercyCreek.app/Contents/MacOS/Mercy Creek" -autotest "$T" -ending $E -lang $([[ $E == escape ]] && echo en || echo zh) -screen-width 1600 -screen-height 900 -screen-fullscreen 0 -logFile - > "$P/Logs/autotest_$E.log" 2>&1 &
+    PID=$!
+    for i in {1..300}; do sleep 1; kill -0 $PID 2>/dev/null || break; done
+    kill $PID 2>/dev/null
+    grep -E 'Exception|\[AutoTest\]|\[Story\]' "$P/Logs/autotest_$E.log" | head -40
+    grep -q "\[AutoTest\] PASS" "$P/Logs/autotest_$E.log" && ! grep -q "\[AutoTest\] FAIL" "$P/Logs/autotest_$E.log" || FAILED=1
+  done
   ls "$T"
+  [[ $FAILED == 0 ]] && echo "AUTOTEST ALL PASS" || { echo "AUTOTEST FAILED"; exit 1; }
 fi
