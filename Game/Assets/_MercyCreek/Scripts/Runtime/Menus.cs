@@ -57,7 +57,7 @@ namespace MercyCreek
         void Awake()
         {
             var args = Environment.GetCommandLineArgs();
-            if (Array.IndexOf(args, "-autoshot") >= 0 || Array.IndexOf(args, "-autotest") >= 0) LoopMemory.Started = true;
+            if (Array.IndexOf(args, "-autoshot") >= 0 || Array.IndexOf(args, "-autotest") >= 0 || Array.IndexOf(args, "-trailer") >= 0) LoopMemory.Started = true;
             int lang = Array.IndexOf(args, "-lang");
             if (lang >= 0 && lang + 1 < args.Length) Loc.Current = args[lang + 1] == "zh" ? Loc.Lang.Zh : Loc.Lang.En;
             BuildUi();

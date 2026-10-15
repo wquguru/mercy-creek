@@ -57,6 +57,8 @@ Reviews/             评审截图（unity/ 与 autotest/ 每次重新生成，gi
 | 本地试玩网页版 | `python3 -m http.server -d Game/Builds/Web 8700` → http://localhost:8700/?lang=zh |
 | 排查画面（关掉某个光照成分） | `SHOT_ARGS="-debug noprobe -only bar -times 8" tools/review.sh --no-setup --no-build` |
 | 改了 Loc 文本后重新裁字体 | `.venv/bin/python tools/fonts/make_font.py` |
+| 宣传片（30fps 逐帧取景 + ffmpeg 合成） | `tools/make_trailer.sh`（`--reuse` 复用已拍的帧） |
+| 组装落地页到 dist/site（不发布） | `tools/make_site.sh` |
 | 截图对照表 | `python3 tools/contact_sheet.py Reviews/unity Reviews/unity/sheet.jpg` |
 
 ## 6. 工作方式
@@ -91,7 +93,7 @@ Reviews/             评审截图（unity/ 与 autotest/ 每次重新生成，gi
 | M5 | ◐ 声音 | 室内环境音、风、脚步（木地板）、钟摆、自动钢琴曲（每轮细微变化，作为线索）、重置音效、结局音乐；音量混合合理 |
 | M6 | ☑ 界面与流程 | 标题画面、设置（鼠标灵敏度、音量、语言中 / 英）、暂停菜单、存档（当前轮数与碎片）、内嵌 OFL 中文字体、分享卡片（轮数 + 用时 + 结局徽记，可保存 PNG） |
 | M7 | ☑ Web 版 | WebGPU 构建可在 Chrome 打开并通关；首包 ≤ 200MB；加载进度条；不支持 WebGPU 时显示说明页 |
-| M8 | ☐ 发布准备 | 30 秒宣传片（脚本化机位 + ffmpeg 合成）、落地页、README、致谢与授权清单。**上线 / 公开发布前必须问人** |
+| M8 | ◐ 发布准备 | 30 秒宣传片（脚本化机位 + ffmpeg 合成）、落地页、README、致谢与授权清单。**上线 / 公开发布前必须问人** |
 
 ## 9. 不要做的事
 - 不要公开仓库、不要部署到公网、不要发帖：这些都要人来点头

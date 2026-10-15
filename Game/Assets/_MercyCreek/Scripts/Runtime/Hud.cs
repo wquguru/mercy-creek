@@ -134,6 +134,9 @@ namespace MercyCreek
 
         public string Saying => _say.text;
 
+        /// <summary>宣传片取景：除黑场外全部隐藏。</summary>
+        public void HideAll() { HudVisible = false; _say.enabled = false; _choices.enabled = false; }
+
         public void Say(string s, float seconds = 5f)
         {
             if (string.IsNullOrEmpty(s)) return;

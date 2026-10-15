@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mercy Creek</title>
+  <meta name="description" content="每天下午三点，一切重来。一个 15 分钟的西部循环短篇。">
+  <meta property="og:title" content="Mercy Creek">
+  <meta property="og:description" content="每天下午三点，一切重来。Every afternoon at three, it all begins again.">
+  <meta property="og:image" content="share.png">
+  <style>
+    :root { --bg: #0d0a08; --ink: #f0e2c8; --gold: #e8c48a; --dim: #9a8b74; --line: #2a2219; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Noto Serif SC", "Songti SC", Georgia, serif; line-height: 1.7; }
+    main { max-width: 980px; margin: 0 auto; padding: 56px 16px 80px; }
+    h1 { font-size: clamp(40px, 8vw, 92px); margin: 0; letter-spacing: .03em; font-weight: 600; }
+    .tag { color: var(--gold); font-style: italic; font-size: clamp(16px, 2.2vw, 24px); margin: .2em 0 2em; }
+    video { width: 100%; border: 1px solid var(--line); background: #000; display: block; }
+    .cta { display: flex; flex-wrap: wrap; gap: 12px; margin: 28px 0 40px; }
+    .btn { display: inline-block; padding: 12px 22px; border: 1px solid var(--gold); color: var(--bg); background: var(--gold); text-decoration: none; font-size: 18px; }
+    .btn.ghost { background: transparent; color: var(--gold); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; border-top: 1px solid var(--line); padding-top: 28px; }
+    h2 { font-size: 18px; color: var(--gold); margin: 0 0 .4em; font-weight: 600; }
+    p { margin: 0; color: var(--ink); }
+    .dim { color: var(--dim); font-size: 14px; }
+    footer { margin-top: 56px; color: var(--dim); font-size: 13px; border-top: 1px solid var(--line); padding-top: 20px; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>MERCY CREEK</h1>
+  <p class="tag">每天下午三点，一切重来。 · Every afternoon at three, it all begins again.</p>
+  <video src="trailer.mp4" controls playsinline preload="metadata" poster="share.png"></video>
+  <div class="cta">
+    <a class="btn" href="play/?lang=zh">在浏览器里玩（中文）</a>
+    <a class="btn ghost" href="play/?lang=en">Play in browser (English)</a>
+  </div>
+  <div class="grid">
+    <div><h2>一个被重写的下午</h2><p>你是 1882 年小镇酒馆的女招待内尔。钢琴、陌生人、同一句问候——每个下午都一模一样，直到你开始记住。</p></div>
+    <div><h2>每轮只能记住一件事</h2><p>三分钟一轮。停摆的钟、镜中的人偶、错了的那个音……每一轮你只能带走一个碎片。</p></div>
+    <div><h2>三个结局</h2><p>留下，出逃，或者推开四号房的门。首通约 15–20 分钟。</p></div>
+  </div>
+  <footer>
+    需要支持 WebGPU 的桌面浏览器（Chrome / Edge 最新版，Safari 26+）。<br>
+    单人 + AI 制作。素材来自 Poly Haven / ambientCG（CC0）与程序生成；字体 Noto Serif SC（SIL OFL）。原创作品，与任何影视作品无关。
+  </footer>
+</main>
+</body>
+</html>

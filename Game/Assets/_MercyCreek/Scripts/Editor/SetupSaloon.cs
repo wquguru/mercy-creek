@@ -221,6 +221,7 @@ namespace MercyCreek.EditorTools
             var autoShot = shots.gameObject.AddComponent<AutoShot>();
             autoShot.loopTimes = new[] { 8f, 75f, 150f };
             shots.gameObject.AddComponent<AutoTest>();
+            shots.gameObject.AddComponent<Trailer>();
             autoShot.viewpoints = new[]
             {
                 Viewpoint(shots, "entrance", new Vector3(0.3f, 1.65f, 0.6f), new Vector3(0.5f, 1.6f, 8f)),

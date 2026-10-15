@@ -41,3 +41,5 @@ __pycache__/
 /Game/Assets/_MercyCreek/Art/Textures/*.png
 /tools/webtest/node_modules/
 /Reviews/web/
+/Reviews/trailer/
+/dist/
