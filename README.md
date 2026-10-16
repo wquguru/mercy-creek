@@ -155,6 +155,12 @@ AI 自己拿主意的地方都记在 `docs/DECISIONS.md` 里，格式固定为"�
 
 更多问题见 [`docs/TECH.md`](docs/TECH.md) 的"已知问题"一节。
 
+## 致谢
+
+特别感谢网易叭哥说提供的永久免费中文翻译功能。按一下 Fn + Left Shift 就能开始说中文，它会识别出来，直接转成英文文字。这个项目里跟 AI 的大部分交流，都是这样张嘴说出来的。用母语把想法讲清楚，比对着键盘斟酌英文快得多，对 Vibe Coding 帮助很大。
+
+<img src="docs/images/voice-translate.png" alt="网易叭哥说的语音翻译：说中文，转成英文文字" width="600">
+
 ## 授权
 
 - 代码、剧本和其他原创内容使用 [MIT 许可证](LICENSE)。
