@@ -78,7 +78,7 @@ Reviews/             评审截图（unity/ 与 autotest/ 每次重新生成，gi
 ## 7. Git
 - 远端：GitHub 私有仓库 `wquguru/mercy-creek`，默认分支 `main`
 - 大文件走 LFS（见 `.gitattributes`）。**能由脚本重建的产物不提交**（Saloon.glb、.blend、构建、评审截图），只提交脚本和 `.meta`，以免 LFS 配额爆掉
-- 一个里程碑或一个独立功能一次提交，提交前 `tools/review.sh --test` 通过；提交信息用中文，第一行说做了什么
+- 一个里程碑或一个独立功能一次提交，提交前 `tools/review.sh --test` 通过；提交信息用英文，第一行说做了什么
 - 不 force push，不改历史
 
 ## 8. 路线图与完成标准
