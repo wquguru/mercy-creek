@@ -10,6 +10,12 @@
 
 这个项目是一个人加 AI（Claude Code）做的。引擎用 Unity 6.3 URP，有 macOS 原生版和网页版（WebGPU）。仓库里的模型、贴图、音频、场景都由脚本生成，没有手工摆放的东西。
 
+## 致谢
+
+特别感谢[网易叭哥说](https://bug.youdao.com/#/)提供的永久免费中文翻译功能。按一下 Fn + Left Shift 就能开始说中文，它会识别出来，直接转成英文文字。这个项目里跟 AI 的大部分交流，都是这样张嘴说出来的。用母语把想法讲清楚，比对着键盘斟酌英文快得多，对 Vibe Coding 帮助很大。
+
+<img src="docs/images/voice-translate.png" alt="网易叭哥说的语音翻译：说中文，转成英文文字" width="600">
+
 ## 操作
 
 | 按键 | 作用 |
@@ -154,12 +160,6 @@ AI 自己拿主意的地方都记在 `docs/DECISIONS.md` 里，格式固定为"�
 - Mac 版没有签名，第一次打开需要在"系统设置 → 隐私与安全性"里允许。
 
 更多问题见 [`docs/TECH.md`](docs/TECH.md) 的"已知问题"一节。
-
-## 致谢
-
-特别感谢[网易叭哥说](https://bug.youdao.com/#/)提供的永久免费中文翻译功能。按一下 Fn + Left Shift 就能开始说中文，它会识别出来，直接转成英文文字。这个项目里跟 AI 的大部分交流，都是这样张嘴说出来的。用母语把想法讲清楚，比对着键盘斟酌英文快得多，对 Vibe Coding 帮助很大。
-
-<img src="docs/images/voice-translate.png" alt="网易叭哥说的语音翻译：说中文，转成英文文字" width="600">
 
 ## 授权
 
