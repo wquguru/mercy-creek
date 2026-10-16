@@ -955,6 +955,14 @@ PX, PY = -8.7, -2.75
 p.lathe([(0, 0.13, 0.13), (7.2, 0.09, 0.09), (7.25, 0, 0)], M["pole"], seg=10, xf=T(PX, PY, GROUND - 0.3), swap_uv=True)
 bx(p, PX - 0.9, PX + 0.9, PY - 0.06, PY + 0.06, 6.55, 6.67, M["dark"])
 obj(p, "TelegraphPole")
+def wire(part, pts):
+    """电报线：竖、横两条扁带交叉成十字截面，从哪个角度看都有宽度；1.4 cm 宽，
+    远处不再因为不到一个像素而断成虚线（原来是 8 mm 单条竖带）。"""
+    d = (Vector(pts[-1]) - Vector(pts[0])).normalized()
+    ribbon(part, pts, 0.014, M["iron"], side=Vector((0, 0, 1)))
+    ribbon(part, pts, 0.014, M["iron"], side=d.cross(Vector((0, 0, 1))))
+
+
 pw = mc.Part([M["iron"]])
 for k, xx in enumerate((PX - 0.75, PX - 0.35, PX + 0.35, PX + 0.75)):
     cyl(pw, xx, PY, 6.67, 6.8, 0.03, M["glass"], seg=8)
@@ -962,11 +970,11 @@ for k, xx in enumerate((PX - 0.75, PX - 0.35, PX + 0.35, PX + 0.75)):
 for xx, yy in ((PX - 0.75, INSUL[0]), (PX - 0.35, INSUL[1])):                                     # 下垂的两根线
     a = Vector((xx, PY, 6.8)); b = Vector((yy, -0.1, 5.18))
     ptsw = [a.lerp(b, i / 16) - Vector((0, 0, 0.25 * math.sin(math.pi * i / 16))) for i in range(17)]
-    ribbon(pw, ptsw, 0.008, M["iron"], side=Vector((0, 0, 1)))
+    wire(pw, ptsw)
 for xx in (PX + 0.35, PX + 0.75):                                                       # 沿街往西去的线（接到殡仪馆门前那根杆）
     a = Vector((xx, PY, 6.8)); b = Vector((xx - 14, PY, 6.8))
     ptsw = [a.lerp(b, i / 20) - Vector((0, 0, 0.6 * math.sin(math.pi * i / 20))) for i in range(21)]
-    ribbon(pw, ptsw, 0.008, M["iron"], side=Vector((0, 0, 1)))
+    wire(pw, ptsw)
 # 西边的第二根杆子（线的另一头）
 p2 = mc.Part([M["pole"]])
 p2.lathe([(0, 0.13, 0.13), (7.2, 0.09, 0.09), (7.25, 0, 0)], M["pole"], seg=10, xf=T(PX - 14, PY, GROUND - 0.3), swap_uv=True)

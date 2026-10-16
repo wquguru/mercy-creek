@@ -22,6 +22,11 @@ namespace MercyCreek
         [HideInInspector] public float lookWeight;
         /// <summary>说话时轻微点头 / 手势。</summary>
         [HideInInspector] public float talk;
+        /// <summary>镜中人偶用：头的俯仰（度，正 = 低头）跟玩家视线；wave 0..1 抬起右手。</summary>
+        [HideInInspector] public float headPitch, wave;
+        /// <summary>手持道具（SetupSaloon.AttachHandProps 挂在手上），按姿势显示。</summary>
+        public GameObject[] propsPour, propsWipe, propsWrite;
+        Pose _propPose = (Pose)(-1);
 
         static readonly string[] Joints =
         {
@@ -59,6 +64,8 @@ namespace MercyCreek
             float time = Time.time + _seed;
             System.Array.Clear(_goal, 0, _goal.Length);
             Vector3 hipsGoal = Vector3.zero;
+
+            if (pose != _propPose) { _propPose = pose; ShowProps(); }
 
             // ---------- 基础姿势 ----------
             switch (pose)
@@ -155,6 +162,16 @@ namespace MercyCreek
                 talk = Mathf.MoveTowards(talk, 0f, Time.deltaTime * 0.5f);
             }
 
+            // ---------- 镜中人偶 ----------
+            if (headPitch != 0f) { G("Neck") += new Vector3(headPitch * 0.35f, 0, 0); G("Head") += new Vector3(headPitch * 0.65f, 0, 0); }
+            if (wave > 0f)
+            {
+                G("R_UpperArm") += new Vector3(-118, 0, -6) * wave;
+                G("R_LowerArm") += new Vector3(-38, 0, 0) * wave;
+                G("R_Hand") += new Vector3(0, 0, 8) * wave;
+                Grip("R", 6);
+            }
+
             // ---------- 平滑过渡，写回骨骼 ----------
             float k = 1f - Mathf.Exp(-Time.deltaTime * 7f);
             for (int i = 0; i < Joints.Length; i++)
@@ -176,6 +193,15 @@ namespace MercyCreek
                 // 头的目标覆盖掉姿势里的低头
                 head.localRotation = Quaternion.Slerp(head.localRotation, Quaternion.Euler(pitch * 0.7f, yaw * 0.6f, 0), lookWeight);
             }
+        }
+
+        void ShowProps()
+        {
+            // 同一只杯子可能同时在 Pour 和 Wipe 里：先全关再开
+            foreach (var set in new[] { propsPour, propsWipe, propsWrite })
+                if (set != null) foreach (var g in set) if (g) g.SetActive(false);
+            var on = pose switch { Pose.Pour => propsPour, Pose.Wipe => propsWipe, Pose.SitWrite => propsWrite, _ => null };
+            if (on != null) foreach (var g in on) if (g) g.SetActive(true);
         }
 
         ref Vector3 G(string j) => ref _goal[Index[j]];

@@ -176,10 +176,12 @@ namespace MercyCreek.EditorTools
             story.crane = MakeNpc("Crane", "npc.crane", "name.crane", 24f);
             story.crane.rig.seatHeight = 0.46f;
             story.crane.walkSpeed = 1.15f;
+            AttachHandProps(saloon, story.gus, story.crane);
 
             // 物件碎片
             Interact(saloon, "vintage_grandfather_clock_01_root", "clock");
             Interact(saloon, "ornate_mirror_01_root", "mirror");
+            SetupMirror(saloon, player, fps);
             Interact(saloon, "dartboard_root", "dartboard");
             Interact(saloon, "wine_bottles_01_root", "bottles");
             float barTop = WorldBounds(Find(saloon, "BarTop").gameObject).max.y;
@@ -252,6 +254,10 @@ namespace MercyCreek.EditorTools
                 Viewpoint(shots, "telegraph", new Vector3(-10.0f, 1.6f, 0.8f), new Vector3(-13.5f, 1.0f, 5.5f)),
                 Viewpoint(shots, "graveyard", new Vector3(28.0f, 1.65f, 0.5f), new Vector3(32f, 0.8f, 5f)),
                 Viewpoint(shots, "canvas", new Vector3(-26.0f, 1.65f, -6.5f), new Vector3(-34f, 2.4f, -7.3f)),
+                // 近景：手持道具（倒酒在 t≈80、写字在 t≈130）、镜中人偶（只在 -only 时拍，见 tools/review.sh）
+                Viewpoint(shots, "gus", new Vector3(-3.7f, 1.55f, 5.2f), new Vector3(-5.7f, 1.2f, 5.2f)),
+                Viewpoint(shots, "mirror", new Vector3(-4.6f, 1.62f, 6.6f), new Vector3(-6.89f, 1.55f, 5.35f)),
+                Viewpoint(shots, "crane", new Vector3(-2.0f, 1.45f, 2.3f), new Vector3(-3.0f, 0.9f, 1.2f)),
             };
 
             // 探针只放在室内（墙内侧），否则墙外被天光照亮的探针会沿墙根漏光
@@ -631,6 +637,7 @@ namespace MercyCreek.EditorTools
         static Npc MakeNpc(string file, string id, string nameKey, float stride)
         {
             var go = PlaceGlb($"Art/Characters/Mannequin_{file}.gltf", file, Vector3.zero, 0, false);
+            SkinLegCloth(go, file);
             var rig = go.AddComponent<MannequinRig>();
             rig.stride = stride;
             var npc = go.AddComponent<Npc>();

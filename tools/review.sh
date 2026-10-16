@@ -12,7 +12,7 @@ PREFS=(dev.mercycreek.game); PB=$ROOT/Reviews/.prefs_backup.plist
 defaults export $PREFS "$PB" 2>/dev/null
 trap 'if [[ -f "$PB" ]]; then defaults import $PREFS "$PB"; else defaults delete $PREFS 2>/dev/null; fi; rm -f "$PB"' EXIT
 run_unity() {   # $1 = method, $2 = log name
-  $U -batchmode -projectPath "$P" -executeMethod "$1" -logFile "$P/Logs/$2.log" >/dev/null 2>&1
+  $U -batchmode -buildTarget OSXUniversal -projectPath "$P" -executeMethod "$1" -logFile "$P/Logs/$2.log" >/dev/null 2>&1
   local rc=$?
   grep -E 'error CS|Exception:|is not possible|\[SetupSaloon\] (done|.*not found)|\[BuildMac\]' "$P/Logs/$2.log" | head -20
   return $rc

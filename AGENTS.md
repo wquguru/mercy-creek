@@ -53,6 +53,7 @@ Reviews/             评审截图（unity/ 与 autotest/ 每次重新生成，gi
 | 同上并自动通关（三个结局 + town 路线 + walls 隐形墙各一遍，含标题 / 开场 / 记忆本 / 分享卡片截图） | `tools/review.sh --test` |
 | 像真人一样试玩三个结局（静音、后台，约 12 分钟；看 `Reviews/playbot/<路线>/`） | `tools/playbot.sh` |
 | 只截图（默认第 3 稿；`SHOT_ARGS="-loop 1"` 拍第 1 稿） | `tools/review.sh --no-setup --no-build` |
+| Windows 构建（Mono，只能构建不能在本机运行；输出 `Game/Builds/Win/` 与 zip） | `tools/build_win.sh` |
 | Web 构建 | `tools/build_web.sh`（输出 `Game/Builds/Web/`，约 92MB） |
 | Web 冒烟测试（本机 Chrome WebGPU，标题截图 + 一个结局自动通关） | `node tools/webtest/webtest.mjs 8700 awaken`（首次先 `cd tools/webtest && npm install`） |
 | 本地试玩网页版 | `python3 -m http.server -d Game/Builds/Web 8700` → http://localhost:8700/?lang=zh |

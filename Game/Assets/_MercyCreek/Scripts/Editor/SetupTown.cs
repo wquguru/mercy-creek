@@ -91,6 +91,8 @@ namespace MercyCreek.EditorTools
 
             // ---------- 画布 + 后面的虚空 ----------
             var canvasMain = Find(edges, "Canvas_Main");
+            story.director.paintedCanvas = edges.GetComponentsInChildren<Renderer>(true)
+                .Where(r => r.sharedMaterials.Any(m => m && m.name.StartsWith("CanvasPaint"))).ToArray();
             var canvasPos = Find(edges, "Canvas_Pos");
             var cTrig = new GameObject("Interact canvas");
             cTrig.transform.position = canvasPos ? canvasPos.position + Vector3.right * 0.3f : new Vector3(story.canvasX + 0.3f, 1.7f, -7.3f);

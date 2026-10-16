@@ -473,7 +473,8 @@ namespace MercyCreek
             NavMeshBuilder.CollectSources(bounds, ~0, NavMeshCollectGeometry.PhysicsColliders, 0, new List<NavMeshBuildMarkup>(), src);
             src.RemoveAll(s => s.component is Collider c && (c.isTrigger || c.transform.IsChildOf(P.transform) || (_ignoreNpc && c.GetComponentInParent<Npc>() == _ignoreNpc)));
             var st = NavMesh.GetSettingsByID(0);
-            st.agentRadius = 0.22f; st.agentHeight = 1.7f; st.agentClimb = 0.34f; st.agentSlope = 45f;
+            // 半径接近玩家胶囊（0.28）：太小会贴着路灯柱走、被角色碰撞卡住
+            st.agentRadius = 0.26f; st.agentHeight = 1.7f; st.agentClimb = 0.34f; st.agentSlope = 45f;
             var data = NavMeshBuilder.BuildNavMeshData(st, src, bounds, Vector3.zero, Quaternion.identity);
             if (_nav.valid) _nav.Remove();
             _nav = NavMesh.AddNavMeshData(data);

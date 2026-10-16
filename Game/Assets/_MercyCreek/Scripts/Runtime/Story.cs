@@ -260,9 +260,9 @@ namespace MercyCreek
         /// <summary>返回 null 表示现在不能交互。</summary>
         public string Prompt(string id) => id switch
         {
-            "npc.gus" => Loc.T("ui.talk", gus.DisplayName),
-            "npc.prof" => Loc.T("ui.talk", prof.DisplayName),
-            "npc.crane" => Loc.T("ui.talk", crane.DisplayName),
+            "npc.gus" => Loc.T("ui.talk", InSentence(gus.DisplayName)),
+            "npc.prof" => Loc.T("ui.talk", InSentence(prof.DisplayName)),
+            "npc.crane" => Loc.T("ui.talk", InSentence(crane.DisplayName)),
             "notebook" => notebook && notebook.activeInHierarchy ? Loc.T("p.notebook") : null,
             "room4" => room4Door.IsOpen ? null : Loc.T("p.room4"),
             "backdoor" => Loc.T("p.backdoor"),
@@ -280,7 +280,9 @@ namespace MercyCreek
             switch (id)
             {
                 case "clock": return Remember("clock", "f.clock");
-                case "mirror": return Remember("mirror", Loop >= 4 && !LoopMemory.Has("mirror") ? "f.mirror.lag" : "f.mirror");
+                case "mirror":
+                    if (MirrorReflection.Instance) MirrorReflection.Instance.Wave();
+                    return Remember("mirror", Loop >= 4 && !LoopMemory.Has("mirror") ? "f.mirror.lag" : "f.mirror");
                 case "door": return Remember("door", "f.door");
                 case "canvas":
                     if (CanTear) { StartCoroutine(TearCanvas()); return Loc.T("f.canvas.tear"); }
@@ -539,5 +541,8 @@ namespace MercyCreek
             hud.ShowEnding(title, sub);
             Debug.Log($"[Story] ending {ending} loop={Loop} fragments={string.Join(",", LoopMemory.Fragments)}");
         }
+
+        /// <summary>英文名字放进句中时，"The Professor" 要变成 "the Professor"。</summary>
+        static string InSentence(string name) => name.StartsWith("The ") ? "the " + name.Substring(4) : name;
     }
 }

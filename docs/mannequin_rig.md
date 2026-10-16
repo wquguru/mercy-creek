@@ -6,6 +6,7 @@
 - **Townsman**（镇民男）：男骨架；卷袖工装衬衫、皮背带（`Cloth_Suspender_*`）、帆布裤、短靴、软毡帽。
 - **Townswoman**（镇民女）：**女骨架（同内尔，关节坐标用表里"内尔"那一列）**；长袖连衣长裙（`Cloth_Skirt` 挂在 Hips，同内尔的走路限制）、披肩（`Cloth_Shawl` + 后背三角 `Cloth_Shawl_Point`）、遮阳软帽（`Cloth_Bonnet`）。
 **没有蒙皮、没有骨骼**：每一段身体是一个独立网格对象，层级就是骨架。转一个节点的 `localRotation`，它和它下面的所有段（连同挂在上面的衣服）一起转。
+- 例外：`Cloth_Skirt` / `Cloth_Apron` / `Cloth_Coat_Tail` 在 Unity 场景生成时（`SetupSaloon.SkinLegCloth`）复制成蒙皮网格，骨骼就是 `Hips`、`L_/R_UpperLeg`、`L_LowerLeg`；越往下、越靠一侧越跟那条腿（裙子最多 80%，风衣后摆 55%），原网格只关渲染。所以穿长裙也可以迈正常步幅
 
 ## 导入约定
 - glTFast 直接导入，**根节点不需要转 180°**（和 Saloon.glb 不同）。导入后角色面朝 Unity **+Z**，Y 向上，1 单位 = 1 米。

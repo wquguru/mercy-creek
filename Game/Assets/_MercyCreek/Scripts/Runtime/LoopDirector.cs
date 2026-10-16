@@ -12,6 +12,9 @@ namespace MercyCreek
     {
         public float loopSeconds = 240f;
         public Light sun;
+        [Tooltip("西头画布上画的街景：画的是午后的光，黄昏时跟着天色一起变暖变暗")]
+        public Renderer[] paintedCanvas;
+        public Color canvasDusk = new(1f, 0.66f, 0.48f);
         public Light[] lamps;
         public Volume resetVolume;          // 重置瞬间：去饱和 + 冷色
         public Hud hud;
@@ -109,7 +112,44 @@ namespace MercyCreek
             if (lamps != null)
                 foreach (var l in lamps)
                     if (l) l.intensity = Mathf.Lerp(lampIntensityStart, lampIntensityEnd, Smooth(k)) * (1f + 0.04f * Mathf.Sin(Time.time * 9f + l.GetInstanceID()));
+            TintCanvas(Smooth(k));
             if (clockMinuteHand) clockMinuteHand.localRotation = Quaternion.Euler(0, 0, -k * 360f * 0.5f);
+        }
+
+        static readonly string[] CanvasColorProps = { "baseColorFactor", "_BaseColor", "emissiveFactor", "_EmissionColor" };
+        MaterialPropertyBlock _mpb;
+        Color[][] _canvasBase;
+
+        void TintCanvas(float k)
+        {
+            if (paintedCanvas == null || paintedCanvas.Length == 0) return;
+            _mpb ??= new MaterialPropertyBlock();
+            if (_canvasBase == null)
+            {
+                // 记下原始颜色（glTFast 和 URP Lit 的属性名不同，有哪个用哪个）
+                _canvasBase = new Color[paintedCanvas.Length][];
+                for (int i = 0; i < paintedCanvas.Length; i++)
+                {
+                    var m = paintedCanvas[i] ? paintedCanvas[i].sharedMaterial : null;
+                    _canvasBase[i] = new Color[CanvasColorProps.Length];
+                    for (int j = 0; j < CanvasColorProps.Length; j++)
+                        _canvasBase[i][j] = m && m.HasProperty(CanvasColorProps[j]) ? m.GetColor(CanvasColorProps[j]) : Color.clear;
+                }
+            }
+            Color tint = Color.Lerp(Color.white, canvasDusk, k);
+            for (int i = 0; i < paintedCanvas.Length; i++)
+            {
+                var r = paintedCanvas[i];
+                if (!r) continue;
+                r.GetPropertyBlock(_mpb);
+                for (int j = 0; j < CanvasColorProps.Length; j++)
+                {
+                    var c0 = _canvasBase[i][j];
+                    if (c0.a <= 0f && c0.maxColorComponent <= 0f) continue;
+                    _mpb.SetColor(CanvasColorProps[j], new Color(c0.r * tint.r, c0.g * tint.g, c0.b * tint.b, c0.a));
+                }
+                r.SetPropertyBlock(_mpb);
+            }
         }
 
         void StartPiano() => Sfx.I?.StartPiano(LoopMemory.Loop);

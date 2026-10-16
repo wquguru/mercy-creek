@@ -1,7 +1,7 @@
 # 技术
 
 ## 版本
-- Unity **6000.3.26f1**（6.3 LTS），装在 `/Applications/Unity/Hub/Editor/6000.3.26f1/`，含 Mac (IL2CPP) 与 Web 模块
+- Unity **6000.3.26f1**（6.3 LTS），装在 `/Applications/Unity/Hub/Editor/6000.3.26f1/`，含 Mac (IL2CPP)、Web、Windows (Mono) 模块
   - Hub 在国内会自动走 `download.unitychina.cn` 镜像，该镜像缺文件会 404。要装别的版本 / 模块：从 `download.unity3d.com` 手动下 pkg（aria2 多线程）后解包到上述目录
 - URP 17.3（Forward+、SSAO、HDR、MSAA 4x），Input System 1.20（仅新输入系统），Timeline、glTFast 6.20、AI Navigation
 - Blender 5.2
@@ -61,16 +61,22 @@ Reviews/           评审截图
 
 ## 已知问题 / 待办
 - Mac 构建约 0.8GB（贴图 BC7 2K）
-- 角色衣服是刚体壳，长裙 / 围裙不跟腿动，步幅受限
-- 人偶没有手持道具（倒酒、写字只是手势）
-- 镜子不反射（"镜中人偶"只靠文字）
+- 长裙 / 围裙 / 风衣后摆在场景生成时转成蒙皮网格（`ClothSkin.cs`，权重按顶点位置程序生成，跟腿走）；其余衣服仍是刚体壳。裙子只有约 7 圈竖向分段，大步时弯折处略显棱角
+- 手持道具（`HandProps.cs`）是基本体拼的：格斯擦杯（杯 + 布）/ 倒酒（瓶 + 杯）、克兰写字（笔），按姿势开关；倒酒时瓶里没有液体流出
+- 镜子是平面反射（`MirrorReflection.cs` + `Mirror.shader`）：HDR RT（桌面全分辨率 + 2×MSAA，网页版半分辨率），只在玩家 7 米内、镜面朝向且在画面里时渲染；镜中站着内尔的人偶（只给反射相机看），第 4 稿起慢 0.45 秒。反射相机不做后期、不抗锯齿
 - 前墙内侧、天花板在午后仍略偏冷灰
 - 界面字体是静态图集：**不能用富文本 `<size>`**（那一段会整段不显示），大小不同的字要分开放 Text；**`<i>` / `FontStyle.Bold|Italic` 会报错且不生效**——Loc.T 把 `<i>` 换成旁白色 `<color=#d4c2a2>`
 - Bundle ID 是 `dev.mercycreek.game`（PlayerPrefs 域同名）；自动测试 / 截图（`Automated`）不写存档，`review.sh` / `playbot.sh` 跑完恢复窗口设置
 - 导入的 glTF 是 Prefab 实例：**不能给里面的节点改父级**（会报 "is not possible" 并静默失败）。要转的门直接把 SwingDoor 挂在节点上（SwingDoor 以载入时的朝向为静止朝向）
-- 街上：马的挽具是刚体，走起来与车辕的接缝会差几厘米；缰绳只在 Blender 评审图里有；画布上的画是午后光，黄昏时不会跟着变红
-- 街东头天空偶尔能看到一条虚线（电报线太细，远处走样）
+- 街上：马的挽具是刚体，走起来与车辕的接缝会差几厘米；缰绳只在 Blender 评审图里有；画布上的画随循环进度乘上黄昏色（`LoopDirector.paintedCanvas`，MaterialPropertyBlock）
+- 电报线改成 1.4 cm 十字截面（原来 8 mm 单条竖带，远处断成虚线）；极远处仍可能细到断续
 - 烘 APV 时日志里会出现一次 `ArgumentNullException ... WriteBakingCells`（新建场景后第一次烘焙时情景名为空），两个情景的数据仍会正确写入，暂不处理
+
+## Windows 版
+- `tools/build_win.sh` → `Game/Builds/Win/MercyCreek.exe` + `Game/Builds/MercyCreek-win64.zip`（约 0.9GB / 压缩 0.6GB）。Mono 后端（Mac 上交叉编译不了 IL2CPP），D3D12 / D3D11
+- 模块装法：从 `download.unity3d.com/download_unity/de8167e7440c/MacEditorTargetInstaller/UnitySetup-Windows-Mono-Support-for-Editor-6000.3.26f1.pkg` 下载，`pkgutil --check-signature` 核验，`pkgutil --expand-full` 后把 `TargetSupport.pkg.tmp/Payload/` 拷到 `PlaybackEngines/WindowsStandaloneSupport/`
+- **只构建过、没在 Windows 上运行过**（本机没有 Windows）。发布前要在真机上跑一遍 `MercyCreek.exe -autotest <目录> -ending awaken`
+- 构建会把工程的当前平台切到 Win64；`review.sh` 已固定 `-buildTarget OSXUniversal`
 
 ## 网页版
 - 只用 WebGPU（`BuildWeb.cs`），Brotli + 解压回退，模板 `Assets/WebGLTemplates/MercyCreek`：不支持 WebGPU 时显示中英说明；网址参数转成命令行参数（`?lang=zh&autotest=x&ending=awaken`）

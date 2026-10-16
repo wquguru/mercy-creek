@@ -9,7 +9,7 @@ DOMAIN="dev.mercycreek.game"   # = Bundle Identifier
 B=$ROOT/Reviews/playbot
 mkdir -p "$B"
 defaults export "$DOMAIN" "$B/prefs_backup.plist" 2>/dev/null
-ROUTES=(${@:-awaken escape reset})
+ROUTES=($@); (( $# )) || ROUTES=(awaken escape reset)   # zsh 不做分词：默认值不能写成 ${@:-a b c}
 FAILED=0
 for R in $ROUTES; do
   D=$B/$R; rm -rf "$D"; mkdir -p "$D"
