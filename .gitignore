@@ -45,3 +45,4 @@ __pycache__/
 /dist/
 /Reviews/playbot/
 /Reviews/.prefs_backup.plist
+/Reviews/*.out
