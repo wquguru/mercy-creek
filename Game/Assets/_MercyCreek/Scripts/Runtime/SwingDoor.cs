@@ -10,6 +10,12 @@ namespace MercyCreek
         public Collider blocker;
 
         float _k, _goal;
+        Quaternion _rest = Quaternion.identity;
+        bool _init;
+
+        // 门可能是导入模型里的节点（不能改父级），静止朝向不一定是单位旋转：以载入时的朝向为准
+        void Awake() => Init();
+        void Init() { if (_init) return; _init = true; _rest = transform.localRotation; }
 
         public bool IsOpen => _goal > 0.5f;
 
@@ -25,8 +31,9 @@ namespace MercyCreek
 
         void Apply()
         {
+            Init();
             float s = _k * _k * (3f - 2f * _k);
-            transform.localRotation = Quaternion.Euler(0, openAngle * s, 0);
+            transform.localRotation = _rest * Quaternion.Euler(0, openAngle * s, 0);
         }
     }
 }

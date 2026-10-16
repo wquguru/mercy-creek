@@ -31,7 +31,9 @@ namespace MercyCreek
         {
             if (!Table.TryGetValue(key, out var e)) { Debug.LogWarning("[Loc] missing " + key); return key; }
             string s = Current == Lang.Zh ? e.zh : e.en;
-            return args.Length > 0 ? string.Format(s, args) : s;
+            if (args.Length > 0) s = string.Format(s, args);
+            // 界面字体是静态图集，<i> 会报错且不生效：旁白改用暖灰色区分
+            return s.Replace("<i>", "<color=#d4c2a2>").Replace("</i>", "</color>");
         }
 
         public static bool Has(string key) => Table.ContainsKey(key);

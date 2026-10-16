@@ -31,9 +31,20 @@ namespace MercyCreek
 
         static void SetCursor(bool locked)
         {
+            if (PlayBot.Active) return;
             Cursor.lockState = locked ? CursorLockMode.Locked : CursorLockMode.None;
             Cursor.visible = !locked;
         }
+
+        /// <summary>自动试玩用：直接设朝向（代替鼠标）。</summary>
+        public void SetLook(float yaw, float pitch)
+        {
+            transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+            _pitch = Mathf.Clamp(pitch, -80f, 80f);
+            if (head) head.localRotation = Quaternion.Euler(_pitch, 0f, 0f);
+        }
+
+        public float Pitch => _pitch;
 
         void Update()
         {

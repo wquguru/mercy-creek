@@ -12,6 +12,7 @@ art/source/        CC0 原始资产（git 忽略，tools/fetch_assets.py 可重�
 art/blender/       saloon_blockout.blend（由脚本生成）
 tools/blender/build_saloon.py   酒馆白模：建筑 + 道具摆放 + 渲染 / 导出 GLB
 tools/review.sh    一键：重建场景 → Mac 构建 → 自动截图（--test 加跑自动通关）
+tools/playbot.sh   像真人一样试玩（虚拟键盘、寻路、静音、后台窗口），三个结局各走一遍
 Game/              Unity 工程
   Assets/_MercyCreek/
     Art/Saloon/Saloon.glb       Blender 导出（glTFast 导入）
@@ -50,6 +51,7 @@ Reviews/           评审截图
 | Menus + Settings | 标题（独立相机缓推）、暂停、设置（灵敏度 / 反转 Y / 音量 / 语言）、结局后按钮；没有 EventSystem，自己处理鼠标键盘 |
 | ShareCard | 1200×630 分享卡片：离屏相机 + Screen Space Camera 画布，Mac 存桌面，Web 用 jslib 下载 |
 | LoopMemory | 另含存档（PlayerPrefs，每轮开始自动存，结局清除） |
+| PlayBot | `-playbot <dir> -route awaken\|escape\|reset [-mute] [-startloop N -frags a,b]`：从标题按键开始，用虚拟键盘走路（运行时烘 NavMesh 寻路）、对准物件等提示再按 E、数字键选对话、Esc 菜单结束下午；屏幕上每句字、走不动、瞄不到、缺文本、异常都写进日志（`ISSUE`）。不锁真鼠标；`tools/playbot.sh` 跑前备份、跑后恢复玩家的 PlayerPrefs |
 | AutoShot / AutoTest | `-autoshot <dir>` 固定机位截图（`-debug` / `-only` / `-times` / `-loop N`）；`-autotest <dir> -ending awaken\|escape\|reset\|town` 自动通关；`-titleshot <png>` 标题与设置画面；`-lang zh\|en` |
 
 ## 光照
@@ -63,7 +65,9 @@ Reviews/           评审截图
 - 人偶没有手持道具（倒酒、写字只是手势）
 - 镜子不反射（"镜中人偶"只靠文字）
 - 前墙内侧、天花板在午后仍略偏冷灰
-- 界面字体是静态图集：**不能用富文本 `<size>`**（那一段会整段不显示），大小不同的字要分开放 Text；`<i>` `<color>` 可以用
+- 界面字体是静态图集：**不能用富文本 `<size>`**（那一段会整段不显示），大小不同的字要分开放 Text；**`<i>` / `FontStyle.Bold|Italic` 会报错且不生效**——Loc.T 把 `<i>` 换成旁白色 `<color=#d4c2a2>`
+- Bundle ID 是 `dev.mercycreek.game`（PlayerPrefs 域同名）；自动测试 / 截图（`Automated`）不写存档，`review.sh` / `playbot.sh` 跑完恢复窗口设置
+- 导入的 glTF 是 Prefab 实例：**不能给里面的节点改父级**（会报 "is not possible" 并静默失败）。要转的门直接把 SwingDoor 挂在节点上（SwingDoor 以载入时的朝向为静止朝向）
 - 街上：马的挽具是刚体，走起来与车辕的接缝会差几厘米；缰绳只在 Blender 评审图里有；画布上的画是午后光，黄昏时不会跟着变红
 - 街东头天空偶尔能看到一条虚线（电报线太细，远处走样）
 - 烘 APV 时日志里会出现一次 `ArgumentNullException ... WriteBakingCells`（新建场景后第一次烘焙时情景名为空），两个情景的数据仍会正确写入，暂不处理

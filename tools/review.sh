@@ -7,10 +7,14 @@ ROOT=${0:A:h:h}
 P=$ROOT/Game
 U=/Applications/Unity/Hub/Editor/6000.3.26f1/Unity.app/Contents/MacOS/Unity
 R=$ROOT/Reviews/unity
+# 自动运行会把窗口大小等写进玩家的 PlayerPrefs：跑完恢复
+PREFS=(dev.mercycreek.game); PB=$ROOT/Reviews/.prefs_backup.plist
+defaults export $PREFS "$PB" 2>/dev/null
+trap 'if [[ -f "$PB" ]]; then defaults import $PREFS "$PB"; else defaults delete $PREFS 2>/dev/null; fi; rm -f "$PB"' EXIT
 run_unity() {   # $1 = method, $2 = log name
   $U -batchmode -projectPath "$P" -executeMethod "$1" -logFile "$P/Logs/$2.log" >/dev/null 2>&1
   local rc=$?
-  grep -E 'error CS|Exception:|\[SetupSaloon\] (done|.*not found)|\[BuildMac\]' "$P/Logs/$2.log" | head -20
+  grep -E 'error CS|Exception:|is not possible|\[SetupSaloon\] (done|.*not found)|\[BuildMac\]' "$P/Logs/$2.log" | head -20
   return $rc
 }
 [[ " $* " == *" --no-setup "* ]] || { echo "== setup"; run_unity MercyCreek.EditorTools.SetupSaloon.Run setup || exit 1; }

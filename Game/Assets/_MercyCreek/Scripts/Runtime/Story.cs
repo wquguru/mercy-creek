@@ -57,14 +57,15 @@ namespace MercyCreek
         };
         public static readonly Vector3[] IntoRoom4 = { new(0f, 3.2f, 10.4f), new(0.3f, 3.2f, 11.6f) };
 
-        /// <summary>马车从西头画布里驶出，沿北侧车道往东，停在酒馆门口。</summary>
-        public Vector3 coachStart = new(-33f, 0, -5.4f), coachStop = new(1.5f, 0, -5.4f);
+        /// <summary>马车从西头画布里驶出，沿北侧车道往东，停在酒馆门口。出发前整辆车（连马）藏在画布后面、不显示。</summary>
+        public Vector3 coachStop = new(1.5f, 0, -5.4f);
+        public Vector3 CoachStart => new(canvasX - 8f, 0, coachStop.z);
         public float coachSpeed = 1.8f;
         /// <summary>画布所在的 x；再往西就是虚空。</summary>
         public float canvasX = -34f, voidEndX = -44f;
 
         public float CraneEnters => LoopMemory.Loop >= 4 ? 50f : 65f;
-        public float CoachSetsOff => CraneEnters - Vector3.Distance(coachStart, coachStop) / coachSpeed - 1f;
+        public float CoachSetsOff => CraneEnters - Vector3.Distance(CoachStart, coachStop) / coachSpeed - 1f;
         public const float WaltzStart = 3f;
 
         /// <summary>第几轮起写出来：街道 + 电报局 2，墓地 3。</summary>
@@ -85,6 +86,16 @@ namespace MercyCreek
         bool _inVoid, _townsfolkNoticed;
 
         float Now => director ? director.Elapsed : 0f;
+
+        /// <summary>酒馆大厅 + 门口栈道 + 二楼。</summary>
+        static bool InSaloonArea(Vector3 p) => p.x > -7.2f && p.x < 7.2f && p.z > -2.6f && p.z < 13.5f;
+
+        /// <summary>玩家在不在酒馆里（酒馆里发生的旁白只有在场才看得到）。</summary>
+        bool InSaloon => !_inVoid && (!player || InSaloonArea(player.position));
+
+        /// <summary>听得见某处说话：12 米内，或者两边都在酒馆里。</summary>
+        public bool CanHear(Vector3 from) =>
+            !_inVoid && (!player || Vector3.Distance(player.position, from) < 12f || (InSaloonArea(player.position) && InSaloonArea(from)));
         int Loop => LoopMemory.Loop;
 
         void Awake() { I = this; }
@@ -94,6 +105,8 @@ namespace MercyCreek
         {
             gus.Place(GusSpot, 90, MannequinRig.Pose.Wipe);
             prof.Place(profSeat, 0, MannequinRig.Pose.Piano);
+            // 坐着的教授只有 1.3 m 高：站立高度的碰撞胶囊会挡住他面前的乐谱
+            if (prof.TryGetComponent<CapsuleCollider>(out var profCap)) { profCap.height = 1.3f; profCap.center = new Vector3(0, 0.65f, 0); }
             crane.Place(CraneBoardwalk, 0, MannequinRig.Pose.Stand);
             crane.gameObject.SetActive(false);
             if (notebook) notebook.SetActive(false);
@@ -106,8 +119,8 @@ namespace MercyCreek
             if (frontDoorBlock) frontDoorBlock.SetActive(!StreetWritten);
             if (coach)
             {
-                coach.Place(coachStart, 90f);
-                coach.Visible = StreetWritten;
+                coach.Place(CoachStart, 90f);
+                coach.Visible = false;
             }
             if (driver) driver.gameObject.SetActive(StreetWritten);
             if (townsfolk != null) foreach (var t in townsfolk) if (t) t.gameObject.SetActive(StreetWritten);
@@ -141,7 +154,7 @@ namespace MercyCreek
                 if (i) return;
                 gus.Say(hud, Loop >= 2 ? "ev.gus.slip" : "ev.gus.day", 4.5f);
             });
-            At(23f, i => { if (!i && Loop == 1) hud.Say(Loc.T("ev.repeat"), 4f); });
+            At(23f, i => { if (!i && Loop == 1 && InSaloon) hud.Say(Loc.T("ev.repeat"), 4f); });
 
             // 钢琴错音：每次弹到第 16 小节
             for (float w = WaltzStart + Sfx.WrongNoteAt; w < end; w += Sfx.WaltzLength)
@@ -150,7 +163,7 @@ namespace MercyCreek
                 At(w, i =>
                 {
                     HeardWrongNote = true;
-                    if (!i && first && Loop <= 2) hud.Say(Loc.T("ev.wrongnote"), 4f);
+                    if (!i && first && Loop <= 2 && InSaloon) hud.Say(Loc.T("ev.wrongnote"), 4f);
                     if (!i) prof.rig.talk = 0.6f;
                 });
             }
@@ -160,7 +173,7 @@ namespace MercyCreek
 
             // 驿站马车 → 陌生人
             if (coach)
-                At(CoachSetsOff, i => coach.Drive(new[] { coachStop }, coachSpeed, i));
+                At(CoachSetsOff, i => { coach.Visible = StreetWritten; coach.Drive(new[] { coachStop }, coachSpeed, i); });
             if (!StreetWritten) At(e - 2f, i => { if (!i) hud.Say(Loc.T("ev.hooves"), 4f); });
             At(e, i =>
             {
@@ -176,9 +189,9 @@ namespace MercyCreek
             At(e + 4f, i =>
             {
                 if (!i) Sfx.I?.PlayAt(Sfx.I.doorOpen, new Vector3(0, 1.4f, 0.2f), 0.7f);
-                if (!i) hud.Say(Loc.T("ev.door"), 4.5f);
+                if (!i && InSaloon) hud.Say(Loc.T("ev.door"), 4.5f);
             });
-            if (Loop >= 3) At(e + 7f, i => { if (!i) { hud.Say(Loc.T("ev.crane.glance"), 4f); crane.LookAtPlayer(3f); } });
+            if (Loop >= 3) At(e + 7f, i => { if (!i && InSaloon) { hud.Say(Loc.T("ev.crane.glance"), 4f); crane.LookAtPlayer(3f); } });
             At(e + 12f, i =>
             {
                 if (!i) crane.Say(hud, "ev.crane.order", 3f);
@@ -213,7 +226,7 @@ namespace MercyCreek
                     });
                 });
             });
-            At(184f, i => { if (!i) hud.Say(Loc.T("ev.crane.leave"), 5f); });
+            At(184f, i => { if (!i && InSaloon) hud.Say(Loc.T("ev.crane.leave"), 5f); });
             At(end - 12f, i => { if (!i) hud.Say(Loc.T(Loop == 1 ? "ev.red1" : "ev.red"), 7f); });
             _beats.Sort((a, b) => a.t.CompareTo(b.t));
         }
@@ -225,7 +238,7 @@ namespace MercyCreek
             while (_next < _beats.Count && _beats[_next].t <= now)
             {
                 var b = _beats[_next++];
-                b.act(now - b.t > 1f);
+                b.act(_inVoid || now - b.t > 1f);   // 人在虚空里：酒馆那边照常发生，但看不见、听不见
             }
             if (CanvasTorn && player) CheckVoid();
         }
@@ -353,8 +366,8 @@ namespace MercyCreek
             if (canvasTear) Sfx.I?.PlayAt(canvasTear, at, 1f);
             if (!canvasFlap) yield break;
             var rest = canvasFlap.localRotation;
-            var col = canvasFlap.GetComponentInChildren<Collider>();
-            if (col) col.enabled = false;
+            // 撕下来的那片转进虚空里，所有碰撞体都要关掉，不然会把人挡在虚空中间
+            foreach (var col in canvasFlap.GetComponentsInChildren<Collider>()) col.enabled = false;
             for (float t = 0; t < 1f; t += Time.deltaTime / 1.4f)
             {
                 float k = 1f - (1f - t) * (1f - t);

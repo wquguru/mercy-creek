@@ -61,7 +61,7 @@ namespace MercyCreek
 
         public static void Save()
         {
-            if (Loop <= 1 && _fragments.Count == 0) return;
+            if (Automated || (Loop <= 1 && _fragments.Count == 0)) return;   // 自动测试 / 截图不碰玩家存档
             PlayerPrefs.SetString(SaveKey, JsonUtility.ToJson(new SaveData { loop = Loop, total = TotalSeconds, fragments = _fragments.ToArray() }));
             PlayerPrefs.Save();
         }

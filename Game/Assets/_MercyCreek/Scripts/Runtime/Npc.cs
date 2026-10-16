@@ -68,8 +68,9 @@ namespace MercyCreek
         /// <summary>在字幕里说一句话，同时点头、看向玩家。</summary>
         public void Say(Hud hud, string key, float seconds = 5f, params object[] args)
         {
-            hud.Say(Loc.Line(nameKey, key, args), seconds);
             if (rig) rig.talk = 1f;
+            if (Story.I && !Story.I.CanHear(transform.position)) return;   // 隔得太远：听不见，也就没有字幕
+            hud.Say(Loc.Line(nameKey, key, args), seconds);
             LookAtPlayer(seconds);
         }
 

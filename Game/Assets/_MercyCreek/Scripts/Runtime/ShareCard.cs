@@ -72,14 +72,14 @@ namespace MercyCreek
                 var frags = LoopMemory.Fragments.Select(f => "✦ " + Loc.T("frag." + f)).ToArray();
 
                 Text(canvasGo.transform, "MERCY CREEK", 26, new Vector2(70, -60), TextAnchor.UpperLeft, new Color(0.91f, 0.77f, 0.54f));
-                Text(canvasGo.transform, title, 88, new Vector2(70, -150), TextAnchor.UpperLeft, Color.white, FontStyle.Bold);
+                Text(canvasGo.transform, title, 88, new Vector2(70, -150), TextAnchor.UpperLeft, Color.white);
                 Text(canvasGo.transform, sub, 30, new Vector2(74, -290), TextAnchor.UpperLeft, new Color(1f, 0.93f, 0.8f));
                 if (frags.Length > 0)
                 {
                     Text(canvasGo.transform, Loc.T("share.memories"), 22, new Vector2(74, -380), TextAnchor.UpperLeft, new Color(0.91f, 0.77f, 0.54f));
                     Text(canvasGo.transform, string.Join("    ", frags), 24, new Vector2(74, -420), TextAnchor.UpperLeft, new Color(1f, 0.93f, 0.8f));
                 }
-                Text(canvasGo.transform, Loc.T("menu.tagline"), 22, new Vector2(74, -560), TextAnchor.UpperLeft, new Color(1f, 0.93f, 0.8f, 0.7f), FontStyle.Italic);
+                Text(canvasGo.transform, Loc.T("menu.tagline"), 22, new Vector2(74, -560), TextAnchor.UpperLeft, new Color(1f, 0.93f, 0.8f, 0.7f));
 
                 Canvas.ForceUpdateCanvases();
                 cam.Render();

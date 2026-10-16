@@ -65,17 +65,13 @@ namespace MercyCreek.EditorTools
             var gateMesh = Find(edges, "Graveyard_Gate");
             if (gateMesh)
             {
-                // 铰链节点包一层：SwingDoor 转的是本节点
-                var hinge = new GameObject("Graveyard Gate Hinge").transform;
-                hinge.SetPositionAndRotation(gateMesh.position, gateMesh.rotation);
-                hinge.SetParent(gateMesh.parent, true);
-                gateMesh.SetParent(hinge, true);
+                // 门的原点就在铰链上（build_edges.py）。导入模型里的节点不能改父级，SwingDoor 直接挂在门上
                 foreach (var r in gateMesh.GetComponentsInChildren<MeshRenderer>(true))
                 {
                     GameObjectUtility.SetStaticEditorFlags(r.gameObject, 0);
                     if (!r.GetComponent<Collider>()) r.gameObject.AddComponent<MeshCollider>().sharedMesh = r.GetComponent<MeshFilter>().sharedMesh;
                 }
-                var gate = hinge.gameObject.AddComponent<SwingDoor>();
+                var gate = gateMesh.gameObject.AddComponent<SwingDoor>();
                 gate.openAngle = GateOpenAngle;
                 gateMesh.gameObject.AddComponent<Interactable>().id = "graveyardgate";
                 story.graveGate = gate;

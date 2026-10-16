@@ -176,7 +176,7 @@ namespace MercyCreek
             if (LoopMemory.Fragments.Count == 0) sb.Append($"<color=#b8a890>{Loc.T("book.empty")}</color>\n");
             foreach (var f in LoopMemory.Fragments)
                 sb.Append($"<color=#e8c48a>◆ {Loc.T("frag." + f)}</color>　<color=#d8ccb8>{Loc.T("frag." + f + ".d")}</color>\n");
-            if (Story.I) sb.Append($"\n<color=#e8c48a>{Loc.T("book.next")}</color>\n<i>{Story.I.NextHint()}</i>\n");
+            if (Story.I) sb.Append($"\n<color=#e8c48a>{Loc.T("book.next")}</color>\n<color=#d4c2a2>{Story.I.NextHint()}</color>\n");
             sb.Append($"\n<color=#8a7c68>{Loc.T("book.close")}</color>");
             _book.text = sb.ToString();
         }
@@ -226,6 +226,8 @@ namespace MercyCreek
         public void SetPrompt(string s) => _prompt.text = s ?? "";
 
         public string Saying => _say.text;
+        public string PromptText => _prompt.text;
+        public string ChoicesText => _choices.text;
 
         /// <summary>宣传片取景：除黑场外全部隐藏。</summary>
         public void HideAll() { HudVisible = false; _say.enabled = false; _choices.enabled = false; ShowBook(false); }

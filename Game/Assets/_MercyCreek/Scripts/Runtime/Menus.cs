@@ -17,7 +17,8 @@ namespace MercyCreek
 
         public static void Apply()
         {
-            AudioListener.volume = Master;
+            // -mute：自动试玩时整个游戏静音（不写进设置）
+            AudioListener.volume = Array.IndexOf(Environment.GetCommandLineArgs(), "-mute") >= 0 ? 0f : Master;
             Sfx.MusicVolume = Music;
             var fpc = UnityEngine.Object.FindFirstObjectByType<FirstPersonController>();
             if (fpc) { fpc.lookSensitivity = Sensitivity; fpc.invertY = InvertY; }
@@ -128,7 +129,7 @@ namespace MercyCreek
             {
                 case Screen.Title:
                     if (LoopMemory.HasSave)
-                        _items.Add(new Item { label = () => Loc.T("menu.continue", LoopMemory.SavedLoop), submit = Continue });
+                        _items.Add(new Item { label = () => Loc.T("menu.continue", LoopMemory.DraftOf(LoopMemory.SavedLoop)), submit = Continue });
                     _items.Add(new Item { label = () => Loc.T("menu.new"), submit = NewGame });
                     _items.Add(new Item { label = () => Loc.T("menu.settings"), submit = () => OpenSettings(Screen.Title) });
                     if (Application.platform != RuntimePlatform.WebGLPlayer)
@@ -164,8 +165,11 @@ namespace MercyCreek
             _dim.color = new Color(0, 0, 0, s == Screen.Pause || s == Screen.Settings && _settingsReturn == Screen.Pause ? 0.6f : 0f);
             if (_hud) _hud.HudVisible = s == Screen.None || s == Screen.Pause;
             bool menuOpen = s != Screen.None;
-            Cursor.lockState = menuOpen ? CursorLockMode.None : CursorLockMode.Locked;
-            Cursor.visible = menuOpen;
+            if (!PlayBot.Active)   // 自动试玩在后台跑，不去抢真鼠标
+            {
+                Cursor.lockState = menuOpen ? CursorLockMode.None : CursorLockMode.Locked;
+                Cursor.visible = menuOpen;
+            }
             Render();
         }
 
@@ -335,8 +339,8 @@ namespace MercyCreek
             _dim.rectTransform.offsetMin = _dim.rectTransform.offsetMax = Vector2.zero;
             _dim.raycastTarget = false;
 
-            _title = MakeText(go.transform, 84, TextAnchor.MiddleLeft, new Vector2(160, 300), new Vector2(1400, 140), FontStyle.Bold);
-            _tagline = MakeText(go.transform, 30, TextAnchor.MiddleLeft, new Vector2(164, 210), new Vector2(1400, 60), FontStyle.Italic);
+            _title = MakeText(go.transform, 84, TextAnchor.MiddleLeft, new Vector2(160, 300), new Vector2(1400, 140), FontStyle.Normal);
+            _tagline = MakeText(go.transform, 30, TextAnchor.MiddleLeft, new Vector2(164, 210), new Vector2(1400, 60), FontStyle.Normal);
             for (int i = 0; i < 7; i++)
                 _rows.Add(MakeText(go.transform, 36, TextAnchor.MiddleLeft, new Vector2(164, 90 - i * 64), new Vector2(760, 58), FontStyle.Normal));
             _hint = MakeText(go.transform, 22, TextAnchor.LowerLeft, new Vector2(164, -440), new Vector2(1600, 40), FontStyle.Normal);

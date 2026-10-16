@@ -32,6 +32,7 @@ namespace MercyCreek
 
         void Awake()
         {
+            if (GetComponent<Collider>()) gameObject.AddComponent<InteractPassThrough>();
             foreach (var t in GetComponentsInChildren<Transform>(true))
             {
                 if (t.name.StartsWith("Wheel_"))

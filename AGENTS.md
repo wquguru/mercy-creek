@@ -51,6 +51,7 @@ Reviews/             评审截图（unity/ 与 autotest/ 每次重新生成，gi
 | 重建酒馆模型并导出 | `blender --background --python tools/blender/build_saloon.py -- --export Game/Assets/_MercyCreek/Art/Saloon/Saloon.gltf` |
 | 重建场景 + Mac 构建 + 截图 | `tools/review.sh` |
 | 同上并自动通关（三个结局 + town 路线 + walls 隐形墙各一遍，含标题 / 开场 / 记忆本 / 分享卡片截图） | `tools/review.sh --test` |
+| 像真人一样试玩三个结局（静音、后台，约 12 分钟；看 `Reviews/playbot/<路线>/`） | `tools/playbot.sh` |
 | 只截图（默认第 3 稿；`SHOT_ARGS="-loop 1"` 拍第 1 稿） | `tools/review.sh --no-setup --no-build` |
 | Web 构建 | `tools/build_web.sh`（输出 `Game/Builds/Web/`，约 92MB） |
 | Web 冒烟测试（本机 Chrome WebGPU，标题截图 + 一个结局自动通关） | `node tools/webtest/webtest.mjs 8700 awaken`（首次先 `cd tools/webtest && npm install`） |
@@ -66,7 +67,7 @@ Reviews/             评审截图（unity/ 与 autotest/ 每次重新生成，gi
 2. **场景是生成的**：`Saloon.unity` 由 `SetupSaloon.cs` 整份重建，不要手改 `.unity`，不要依赖编辑器里的手工操作。所有资产生成都要有脚本（Blender / Python / Unity Editor 脚本）。
 3. **每次改动都要自己验证，看过结果才能说"完成"**：
    - 视觉改动：跑 `tools/review.sh`，用 Read 工具逐张看 `Reviews/unity/*.png`，对照 `ART_STYLE.md`
-   - 玩法 / 剧本改动：跑 `tools/review.sh --test`，必须看到 `[AutoTest] PASS`，并检查日志里没有 `Exception`
+   - 玩法 / 剧本改动：跑 `tools/review.sh --test`，必须看到 `[AutoTest] PASS`，并检查日志里没有 `Exception`；再跑 `tools/playbot.sh`，必须 `PLAYBOT ALL CLEAN`（AutoTest 直接调 Story，走不到、瞄不到的问题只有 PlayBot 能发现）
    - 音频改动：用 ffmpeg 出波形 / 频谱图看，确认没有爆音、电平合理（峰值 ≤ -1 dBFS）
    - 新增结局或分支：给 `AutoTest` 加对应路线
 4. **完不成就说完不成**：测试失败、截图难看、某步跳过，都要在汇报里写清楚，并记进 `TECH.md` 的已知问题。

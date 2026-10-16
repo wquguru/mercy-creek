@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-7313877142721336454
+--- !u!114 &-6003911826283663448
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_CorrespondingSourceObject: {fileID: 0}
@@ -29,10 +29,10 @@ MonoBehaviour:
   m_Name: ResetProfile
   m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.VolumeProfile
   components:
-  - {fileID: 7676824113367502070}
-  - {fileID: -7313877142721336454}
-  - {fileID: 7771200510488509133}
---- !u!114 &7676824113367502070
+  - {fileID: 482457379894424297}
+  - {fileID: -6003911826283663448}
+  - {fileID: 8625900321537607343}
+--- !u!114 &482457379894424297
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_CorrespondingSourceObject: {fileID: 0}
@@ -60,7 +60,7 @@ MonoBehaviour:
   saturation:
     m_OverrideState: 1
     m_Value: -95
---- !u!114 &7771200510488509133
+--- !u!114 &8625900321537607343
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_CorrespondingSourceObject: {fileID: 0}
