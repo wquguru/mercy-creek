@@ -12,7 +12,7 @@ using UnityEngine.SceneManagement;
 namespace MercyCreek
 {
     /// <summary>
-    /// 自动试玩：`-playbot &lt;截图目录&gt; -route awaken|escape|reset [-mute]`。
+    /// 自动试玩：`-playbot &lt;截图目录&gt; -route awaken|escape|reset|truth [-mute]`。
     /// 和 AutoTest 不同，这里像真人一样玩：从标题画面按键开始、看完开场打字页、用虚拟键盘走路（运行时烘的 NavMesh 寻路）、
     /// 转头对准物件、等准星提示出现再按 E、对话用数字键选、Esc 菜单"结束这个下午"。时间不快进跳拍，只在干等时加速。
     /// 屏幕上出现的每一句字都记进日志；走不动、找不到提示、掉出世界、缺文本、异常都记为 ISSUE。
@@ -169,6 +169,7 @@ namespace MercyCreek
                 case "awaken": return Awaken(loop);
                 case "escape": return Escape(loop);
                 case "reset": return ResetRoute(loop);
+                case "truth": return Truth(loop);
                 case "probe": return Probe();
             }
             Issue("unknown route " + _route);
@@ -176,7 +177,7 @@ namespace MercyCreek
             return null;
         }
 
-        /// <summary>像第一次玩的人：先到处看，再一轮一轮把街道、电报、墓地、画布、4 号房走完，最后打字机觉醒。</summary>
+        /// <summary>像第一次玩的人：先到处看，再一轮一轮把街道、电报、墓地走完；没有信时 4 号房不开，找到杯子和信、记满 5 件后打字机觉醒。</summary>
         IEnumerator Awaken(int loop)
         {
             if (loop == 1)
@@ -245,20 +246,93 @@ namespace MercyCreek
             }
             else if (loop == 4)
             {
-                yield return Use("canvas");
+                yield return Use("glass");
+                Expect(LoopMemory.Has("glass"), "glass fragment");
+                yield return Use("letter");
+                Expect(!LoopMemory.Has("letter"), "letter waits for the next draft (one per loop)");
+                yield return Use("room4");
+                Expect(!S.room4Door.IsOpen, "room 4 stays locked without the letter");
+                Expect(Said("f.room4.noletter"), "room 4 hints at the missing letter");
                 yield return Book("l4_book");
+                yield return Use("sheet");
+                yield return EndAfternoonViaMenu();
+            }
+            else if (loop == 5)
+            {
+                yield return Use("letter");
+                Expect(LoopMemory.Has("letter") && LoopMemory.Fragments.Count == 5, "letter is the 5th fragment");
+                yield return Book("l5_book");
+                yield return Use("room4");
+                Expect(S.room4Door.IsOpen, "room 4 opens with 5 fragments incl. the letter");
+                yield return Wait(2f);
+                Shot("l5_room4");
+                yield return Use("typewriter");
+                Expect(!H.ChoicesOpen, "typewriter does not wait without the truth pieces");
+                yield return WaitEnding("Awaken");
+            }
+            else { yield return Book($"l{loop}_book"); Issue("awaken route should have ended by loop 5"); _done = true; }
+        }
+
+        /// <summary>真相：错音 → 杯子 → 信 → 笼子 → 电报 → 墓碑，然后在 4 号房的打字机前坐下，自己打下一句。</summary>
+        IEnumerator Truth(int loop)
+        {
+            if (loop == 1)
+            {
                 yield return Use("sheet");
                 while (!S.HeardWrongNote) yield return WaitTime(Now + 1f);
                 yield return Talk("npc.prof", "d.prof.wrong");
-                Expect(LoopMemory.Fragments.Count >= 4, "4 fragments by draft 15");
-                yield return Use("room4");
-                Expect(S.room4Door.IsOpen, "room 4 opens with 4 fragments");
-                yield return Wait(2f);
-                Shot("l4_room4");
-                yield return Use("typewriter");
-                yield return WaitEnding("Awaken");
+                Expect(LoopMemory.Has("piano"), "piano fragment");
+                yield return EndAfternoonViaMenu();
             }
-            else { yield return Book($"l{loop}_book"); Issue("awaken route should have ended by loop 4"); _done = true; }
+            else if (loop == 2)
+            {
+                yield return Use("glass");
+                Expect(LoopMemory.Has("glass"), "glass fragment");
+                yield return Book("l2_book");
+                yield return EndAfternoonViaMenu();
+            }
+            else if (loop == 3)
+            {
+                yield return Use("letter");
+                Expect(LoopMemory.Has("letter"), "letter fragment");
+                yield return Talk("npc.prof", "d.prof.notyet");
+                yield return Use("room4");
+                Expect(!S.room4Door.IsOpen && _saidThisLoop.Any(x => x.Contains(Clean(Loc.T("f.room4.count", 3)))), "room 4 counts fragments once the letter is known (3/5)");
+                yield return EndAfternoonViaMenu();
+            }
+            else if (loop == 4)
+            {
+                yield return Talk("npc.prof", "d.prof.onpurpose");
+                Expect(LoopMemory.Has("cage"), "cage fragment");
+                yield return Use("sheet");
+                yield return EndAfternoonViaMenu();
+            }
+            else if (loop == 5)
+            {
+                yield return Use("telegraph");
+                Expect(LoopMemory.Has("telegram"), "telegram fragment");
+                Expect(Story.AwakenReady && !Story.TruthKnown, "awaken reachable, truth not yet");
+                yield return Book("l5_book");
+                yield return EndAfternoonViaMenu();
+            }
+            else if (loop == 6)
+            {
+                yield return Use("grave");
+                Expect(Story.TruthKnown, "all four truth pieces");
+                yield return Book("l6_book");
+                yield return Use("room4");
+                Expect(S.room4Door.IsOpen, "room 4 open");
+                yield return Wait(2f);
+                yield return Talk("typewriter", "d.type.write");
+                Expect(S.Ended, "truth ending started");
+                float t0 = Time.realtimeSinceStartup;
+                while (!H.Typing && Time.realtimeSinceStartup - t0 < 15f) yield return null;
+                Expect(H.Typing, "Nell types the last line");
+                yield return new WaitForSecondsRealtime(6.5f);
+                Shot("truth_typing");
+                yield return WaitEnding("Truth");
+            }
+            else { yield return Book($"l{loop}_book"); Issue("truth route should have ended by loop 6"); _done = true; }
         }
 
         /// <summary>画布出逃：日历 → 画布（门）→ 撕开画布、走进虚空。</summary>
@@ -369,7 +443,7 @@ namespace MercyCreek
         IEnumerator WaitEnding(string expected)
         {
             float t0 = Time.realtimeSinceStartup;
-            while (!H.EndingShown && Time.realtimeSinceStartup - t0 < 25f) yield return null;
+            while (!H.EndingShown && Time.realtimeSinceStartup - t0 < 50f) yield return null;   // 真相要先打完一页字
             yield return new WaitForSecondsRealtime(1.5f);
             Shot("ending_" + expected.ToLower());
             Expect(H.EndingShown && LoopMemory.LastEnding == expected, $"ending {expected} (got {LoopMemory.LastEnding ?? "none"})");

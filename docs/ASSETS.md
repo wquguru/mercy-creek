@@ -135,7 +135,7 @@
 | coach_stop.wav | tools/audio/town.py `coach_stop` | 自制 | 单声道 3.4 s；马车减速停下：刹车棘轮 + 刹车吱声 + 车身前冲荡回 + 挽具叮当（无人声） |
 | horse_snort_01 / _02.wav, horse_stamp.wav | tools/audio/town.py `horse_snort` / `horse_stamp` | 自制 | 单声道；马打响鼻 / 长长"噗噜噜" / 跺蹄 + 叮当 |
 | telegraph_loop.wav | tools/audio/town.py `telegraph_loop` | 自制 | 单声道 12 s 无缝循环；电报音响器用美式莫尔斯码发"DRAFT VOID STOP REWRITE STOP"，后接约 2.5 s 静默 |
-| church_bell.wav / church_bell_three.wav | tools/audio/town.py `church_bell` / `church_bell_three` | 自制 | 小青铜钟一声（单声道 9.5 s，nominal D#5，hum/prime/小三度 tierce/quint/nominal 分音）/ 远处三声（立体声 14 s，相隔 3.2 s） |
+| church_bell.wav / church_bell_three.wav / church_bell_four.wav | tools/audio/town.py `church_bell` / `church_bell_three` / `church_bell_four` | 自制 | 小青铜钟一声（单声道 9.5 s，nominal D#5，hum/prime/小三度 tierce/quint/nominal 分音）/ 远处三声（立体声 14 s，相隔 3.2 s）/ 远处四声（立体声 17 s，真相结局） |
 | amb_street_loop.wav | tools/audio/town.py `amb_street_loop` | 自制 | 立体声 36 s 无缝循环；午后主街：干燥阵风 + 扬沙 + 远处吱呀 + 很淡的鸟叫虫鸣；RMS -30 dBFS |
 | step_dirt_01..06.wav | tools/audio/town.py `step_dirt` | 自制 | 女式皮靴踩压实土路 + 碎石；峰值 -6 dBFS |
 | step_boardwalk_01..06.wav | tools/audio/town.py `step_boardwalk` | 自制 | 户外架空木栈道（比室内 step_wood 更低更空、有松板磕碰）；峰值 -6 dBFS |

@@ -61,6 +61,7 @@ JOBS = [
     ('telegraph_loop', town.telegraph_loop, 'peak', -6.0),
     ('church_bell', town.church_bell, 'peak', -3.0),
     ('church_bell_three', town.church_bell_three, 'peak', -4.0),
+    ('church_bell_four', town.church_bell_four, 'peak', -4.0),
     ('amb_street_loop', town.amb_street_loop, 'rms', -30.0),
     *[(f'step_dirt_{i:02d}', (lambda i=i: town.step_dirt(i)), 'peak', -6.0) for i in range(1, 7)],
     *[(f'step_boardwalk_{i:02d}', (lambda i=i: town.step_boardwalk(i)), 'peak', -6.0) for i in range(1, 7)],

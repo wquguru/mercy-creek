@@ -16,7 +16,7 @@
 
 </div>
 
-一个 25–35 分钟的写实西部循环短篇。你是 1882 年小镇酒馆的女招待内尔，同一个下午一遍遍重来，每一遍叫"一稿"，每稿只能带走一段记忆。世界也随稿数被"写"出来：先是酒馆，然后是主街、电报局、教堂墓地，以及街道尽头那块画布。三个结局：留下、出逃、觉醒。
+一个 25–35 分钟的写实西部循环短篇。你是 1882 年小镇酒馆的女招待内尔，同一个下午一遍遍重来，每一遍叫"一稿"，每稿只能带走一段记忆。世界也随稿数被"写"出来：先是酒馆，然后是主街、电报局、教堂墓地，以及街道尽头那块画布。四个结局：留下、出逃、觉醒，以及藏得更深的真相。
 
 一个人加 AI（Claude Code）开发。模型、贴图、音频、场景全部由脚本生成，没有手工摆放的东西。
 
@@ -43,7 +43,7 @@ tools/bootstrap.sh    # 看到 AUTOTEST ALL PASS 即成功，游戏在 Game/Buil
 | 常用命令 | |
 |---|---|
 | `tools/review.sh --test` | 重建场景 → 构建 → 截图 → 自动通关 |
-| `tools/playbot.sh awaken escape reset` | 像真人一样玩完三个结局（静音、后台） |
+| `tools/playbot.sh awaken escape reset truth` | 像真人一样玩完四个结局（静音、后台） |
 | `tools/build_web.sh` | 构建网页版，`python3 -m http.server -d Game/Builds/Web 8700` 本地试玩 |
 | `tools/make_trailer.sh` / `tools/make_site.sh` | 生成宣传片 / 落地页 |
 

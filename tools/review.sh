@@ -39,11 +39,11 @@ for L in zh en; do
   grep -E 'Exception' "$P/Logs/title_$L.log" | head -5
 done
 
-# 自动通关测试：三个结局各跑一遍，外加 town（马车 / 电报 / 墓地 → 觉醒）
+# 自动通关测试：四个结局各跑一遍，外加 town（马车 / 电报 / 墓地 → 没有信时 4 号房不开 → 觉醒）
 if [[ " $* " == *" --test "* ]]; then
   T=$ROOT/Reviews/autotest; rm -rf "$T"; mkdir -p "$T"
   FAILED=0
-  for E in awaken escape reset town walls; do
+  for E in awaken escape reset truth town walls; do
     echo "== autotest $E"
     EXTRA=(); [[ $E == walls ]] && EXTRA=(-loop 3)
     "$P/Builds/Mac/MercyCreek.app/Contents/MacOS/Mercy Creek" -autotest "$T" -ending $E $EXTRA -lang $([[ $E == escape ]] && echo en || echo zh) -screen-width 1600 -screen-height 900 -screen-fullscreen 0 -logFile - > "$P/Logs/autotest_$E.log" 2>&1 &

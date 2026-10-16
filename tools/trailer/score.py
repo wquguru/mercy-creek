@@ -283,7 +283,7 @@ def act4():
     while t < 67.45:   # 字出来之前，打字机先自己敲了几下
         put(b, keys[r.integers(4)], t, 0.7)
         t += r.uniform(0.09, 0.2)
-    last = [x for x in edl.TEXTS if x[3].startswith("……")][0]
+    last = [x for x in edl.TEXTS if x[2] == "type"][-1]   # 最后一句打字（"……她终于醒了" / "...at last, she woke."）
     end_t = last[0] + len(last[3]) * edl.TYPE_RATE
     put(b, wav("typewriter_bell"), end_t + 0.25, 0.7)
     put(b, wav("typewriter_return"), end_t + 0.9, 0.45)

@@ -1,5 +1,5 @@
 #!/bin/zsh
-# 自动试玩（静音、后台窗口、不抢鼠标）：tools/playbot.sh [awaken escape reset]
+# 自动试玩（静音、后台窗口、不抢鼠标）：tools/playbot.sh [awaken escape reset truth]
 # 先构建：tools/review.sh --no-setup 或 BuildMac。截图和日志在 Reviews/playbot/<路线>/。
 # 会临时清空并在结束后恢复玩家的 PlayerPrefs（存档 / 设置）。
 set -u
@@ -9,7 +9,7 @@ DOMAIN="dev.mercycreek.game"   # = Bundle Identifier
 B=$ROOT/Reviews/playbot
 mkdir -p "$B"
 defaults export "$DOMAIN" "$B/prefs_backup.plist" 2>/dev/null
-ROUTES=($@); (( $# )) || ROUTES=(awaken escape reset)   # zsh 不做分词：默认值不能写成 ${@:-a b c}
+ROUTES=($@); (( $# )) || ROUTES=(awaken escape reset truth)   # zsh 不做分词：默认值不能写成 ${@:-a b c}
 FAILED=0
 for R in $ROUTES; do
   D=$B/$R; rm -rf "$D"; mkdir -p "$D"

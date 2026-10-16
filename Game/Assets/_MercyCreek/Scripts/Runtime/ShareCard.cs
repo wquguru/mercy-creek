@@ -68,7 +68,10 @@ namespace MercyCreek
                 string ending = LoopMemory.LastEnding ?? "Awaken";
                 int secs = Mathf.FloorToInt(LoopMemory.TotalSeconds);
                 string title = Loc.T("end." + ending.ToLower());
-                string sub = ending == "Awaken" ? Loc.T("end.awaken.sub", LoopMemory.Loop, secs / 60, secs % 60) : Loc.T("end." + ending.ToLower() + ".sub");
+                // 觉醒 / 真相的副标题带稿数和用时，其余是固定一句
+                string sub = ending is "Awaken" or "Truth"
+                    ? Loc.T("end." + ending.ToLower() + ".sub", LoopMemory.Draft, secs / 60, secs % 60)
+                    : Loc.T("end." + ending.ToLower() + ".sub");
                 var frags = LoopMemory.Fragments.Select(f => "✦ " + Loc.T("frag." + f)).ToArray();
 
                 Text(canvasGo.transform, "MERCY CREEK", 26, new Vector2(70, -60), TextAnchor.UpperLeft, new Color(0.91f, 0.77f, 0.54f));

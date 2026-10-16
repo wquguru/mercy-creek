@@ -88,6 +88,7 @@ namespace MercyCreek.EditorTools
             bell.spatialBlend = 0.6f; bell.minDistance = 20f; bell.maxDistance = 200f; bell.rolloffMode = AudioRolloffMode.Linear; bell.playOnAwake = false;
             story.bell = bell;
             story.bellThree = Clip("church_bell_three");
+            story.bellFour = Clip("church_bell_four");
 
             // ---------- 画布 + 后面的虚空 ----------
             var canvasMain = Find(edges, "Canvas_Main");

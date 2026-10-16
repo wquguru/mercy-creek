@@ -49,6 +49,8 @@ def text_layer(text, fnt, track, cy, alpha, color=INK, shadow=0.0, glow=0.0, cx=
     if alpha <= 0 or not text:
         return layer
     d = ImageDraw.Draw(layer)
+    if edl.LANG == "en" and fnt.path.endswith(ZH):
+        track *= 0.2   # 中文字卡的大字距放到拉丁字母上太散
     glyphs, tw = spaced(d, text, fnt, track)
     x0 = cx - tw / 2
     asc, desc = fnt.getmetrics()
@@ -112,10 +114,11 @@ def draw_texts(img, t):
         elif kind == "endcard":
             a = env(t, t0, t1, 0.8, 0.9)
             L = text_layer("MERCY CREEK", font(FELL, 96), 0.26, H / 2 - 70, a, color=(242, 230, 206), glow=0.35)
-            for txt, f, tr, y, col in (("第几稿，你才会醒来？", font(ZH, 34), 0.2, H / 2 + 30, INK),
-                                       ("macOS  ·  网页版", font(ZH, 30), 0.12, H / 2 + 110, (200, 186, 160)),
-                                       ("即 将 推 出", font(ZH, 26), 0.3, H / 2 + 160, (200, 186, 160)),
-                                       ("游戏实机画面", font(ZH, 20), 0.2, H - 60, (130, 122, 110))):
+            tag, plat, soon, cap = edl.ENDCARD
+            for txt, f, tr, y, col in ((tag, font(ZH, 34), 0.2, H / 2 + 30, INK),
+                                       (plat, font(ZH, 30), 0.12, H / 2 + 110, (200, 186, 160)),
+                                       (soon, font(ZH, 26), 0.3 if edl.LANG == "zh" else 0.1, H / 2 + 160, (200, 186, 160)),
+                                       (cap, font(ZH, 20), 0.2 if edl.LANG == "zh" else 0.08, H - 60, (130, 122, 110))):
                 L = Image.alpha_composite(L, text_layer(txt, f, tr, y, a, color=col))
         else:
             continue

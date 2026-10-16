@@ -12,7 +12,7 @@ art/source/        CC0 原始资产（git 忽略，tools/fetch_assets.py 可重�
 art/blender/       saloon_blockout.blend（由脚本生成）
 tools/blender/build_saloon.py   酒馆白模：建筑 + 道具摆放 + 渲染 / 导出 GLB
 tools/review.sh    一键：重建场景 → Mac 构建 → 自动截图（--test 加跑自动通关）
-tools/playbot.sh   像真人一样试玩（虚拟键盘、寻路、静音、后台窗口），三个结局各走一遍
+tools/playbot.sh   像真人一样试玩（虚拟键盘、寻路、静音、后台窗口），四个结局各走一遍
 Game/              Unity 工程
   Assets/_MercyCreek/
     Art/Saloon/Saloon.glb       Blender 导出（glTFast 导入）
@@ -41,7 +41,7 @@ Reviews/           评审截图
 | PlayerInteractor + Interactable | 准星交互，E 或左键；碎片、上锁门、结局 |
 | Hud | 代码搭的 uGUI：循环数、提示、字幕、黑场、结局卡 |
 | LightShaft | 沿太阳方向平移窗口矩形叠 28 张切片，additive + 深度软相交 + 窗棂遮挡 + 浮尘噪声 |
-| Story | 剧本唯一实现：每轮时间表（按 LoopDirector.Elapsed 触发，快进时以 instant 补上）、12 个碎片、对话选项、三个结局、按稿数解锁地点（StreetWritten / GraveyardWritten）、记忆本"下一步"提示 |
+| Story | 剧本唯一实现：每轮时间表（按 LoopDirector.Elapsed 触发，快进时以 instant 补上）、12 个碎片、对话选项、四个结局、按稿数解锁地点（StreetWritten / GraveyardWritten）、记忆本"下一步"提示 |
 | Coach + HorseRig | 驿站马车沿路点行驶（加减速、车轮按距离转、车厢晃）；木头马四拍慢步（相位按距离推进），见 docs/horse_rig.md |
 | Townsfolk | 定格镇民：第 3 稿起转头看玩家，第 5 稿起转身 |
 | Loc | 文本表（中 / 英），所有给玩家看的字都从这里取 |

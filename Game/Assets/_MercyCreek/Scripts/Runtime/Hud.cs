@@ -99,24 +99,31 @@ namespace MercyCreek
 
         // ---------- 对话选项 ----------
         List<(string label, Action pick)> _opts;
-        Npc _talkingTo;
+        // 选项的对象：NPC，或者打字机这样的物件（走远了 / 对象消失就自动关闭）
+        Transform _anchor;
+        Vector3 _anchorOffset;
+        string _choiceTitle;
         int _sel, _openedFrame;
 
         public bool ChoicesOpen => _opts != null;
 
-        public void ShowChoices(Npc npc, List<(string label, Action pick)> options)
+        public void ShowChoices(Npc npc, List<(string label, Action pick)> options) =>
+            ShowChoices(npc.DisplayName, npc.transform, options, Vector3.up * 1.4f);
+
+        public void ShowChoices(string title, Transform anchor, List<(string label, Action pick)> options, Vector3 offset = default)
         {
-            _talkingTo = npc; _opts = options; _sel = 0; _openedFrame = Time.frameCount;
+            _choiceTitle = title; _anchor = anchor; _anchorOffset = offset;
+            _opts = options; _sel = 0; _openedFrame = Time.frameCount;
             _opts.Add((Loc.T("ui.leave"), null));
             RenderChoices();
         }
 
-        public void CloseChoices() { _opts = null; _talkingTo = null; _choices.text = ""; }
+        public void CloseChoices() { _opts = null; _anchor = null; _choices.text = ""; }
 
         void RenderChoices()
         {
             var sb = new System.Text.StringBuilder();
-            sb.Append($"<color=#e8c48a>{_talkingTo.DisplayName}</color>\n");
+            sb.Append($"<color=#e8c48a>{_choiceTitle}</color>\n");
             for (int i = 0; i < _opts.Count; i++)
                 sb.Append(i == _sel ? $"<color=#ffe2a8>▸ {i + 1}. {_opts[i].label}</color>\n" : $"   {i + 1}. <color=#c8b8a0>{_opts[i].label}</color>\n");
             _choices.text = sb.ToString();
@@ -127,7 +134,7 @@ namespace MercyCreek
             if (_opts == null || Time.frameCount == _openedFrame) return;   // 打开选项的那一下 E 不算选择
             var kb = Keyboard.current; var mouse = Mouse.current;
             var cam = Camera.main;
-            if (!_talkingTo || !_talkingTo.isActiveAndEnabled || (cam && Vector3.Distance(cam.transform.position, _talkingTo.transform.position + Vector3.up * 1.4f) > 3.6f))
+            if (!_anchor || !_anchor.gameObject.activeInHierarchy || (cam && Vector3.Distance(cam.transform.position, _anchor.position + _anchorOffset) > 3.6f))
             { CloseChoices(); return; }
             int pick = -1;
             if (kb != null)
@@ -232,6 +239,8 @@ namespace MercyCreek
         /// <summary>宣传片取景：除黑场外全部隐藏。</summary>
         public void HideAll() { HudVisible = false; _say.enabled = false; _choices.enabled = false; ShowBook(false); }
 
+        public void ClearSay() { _say.text = ""; _sayUntil = 0f; }
+
         public void Say(string s, float seconds = 5f)
         {
             if (string.IsNullOrEmpty(s)) return;
@@ -255,9 +264,10 @@ namespace MercyCreek
             var player = FindFirstObjectByType<FirstPersonController>();
             if (player) player.InputLocked = true;
             yield return new WaitForSeconds(2f);
+            float from = Fade;   // 真相结局从黑场打字页直接接过来，不能先闪回画面
             for (float t = 0; t < 1; t += Time.deltaTime / 3f)
             {
-                Fade = t;
+                Fade = Mathf.Max(from, t);
                 _card.color = _cardSub.color = new Color(1, 0.93f, 0.8f, t);
                 yield return null;
             }

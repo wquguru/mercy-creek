@@ -5,7 +5,7 @@ using UnityEngine;
 namespace MercyCreek
 {
     /// <summary>
-    /// 自动通关测试：`-autotest &lt;截图目录&gt; -ending awaken|escape|reset`。
+    /// 自动通关测试：`-autotest &lt;截图目录&gt; -ending awaken|escape|reset|truth|town|walls`。
     /// 每轮做一件事（记一个碎片 / 走一段对话）→ 快进到循环末尾 → 场景重载后本组件重新 Start，进度在 LoopMemory。
     /// 达成结局后截图，输出 `[AutoTest] PASS &lt;结局&gt;` 或 FAIL。
     /// </summary>
@@ -60,13 +60,22 @@ namespace MercyCreek
                     {
                         Log(story.Use("letter"));
                         Expect(LoopMemory.Has("letter"), "letter fragment");
+                        Log("room4 with 4: " + story.Use("room4"));
+                        Expect(!story.room4Door.IsOpen, "room 4 needs 5 fragments");
+                        Log("hint: " + story.NextHint());
+                        Expect(story.NextHint() == Loc.T("hint.room4", 4), "hint counts toward room 4 (4/5)");
                     }
                     else
                     {
+                        Log(story.Use("clock"));
+                        Expect(LoopMemory.Fragments.Count == 5, "5 fragments by draft 16");
+                        Log("hint: " + story.NextHint());
                         Log("room4: " + story.Use("room4"));
+                        Expect(story.room4Door.IsOpen, "room 4 opens with 5 fragments incl. letter");
                         yield return new WaitForSeconds(2.5f);
                         Shot("room4_open");
                         story.Use("typewriter");
+                        Expect(!FindFirstObjectByType<Hud>().ChoicesOpen, "no typewriter choice without the truth pieces");
                         yield return WaitEnding("Awaken");
                         yield break;
                     }
@@ -85,6 +94,9 @@ namespace MercyCreek
                         Log("canvas before calendar: " + story.Use("canvas"));
                         Expect(!story.CanvasTorn, "canvas needs door + calendar");
                         Log(story.Use("calendar"));
+                        Log("canvas in draft 13: " + story.Use("canvas"));
+                        Expect(!story.CanvasTorn, "canvas cannot be torn before draft 14");
+                        Log("hint: " + story.NextHint());
                     }
                     else
                     {
@@ -137,13 +149,77 @@ namespace MercyCreek
                         yield return null;
                         hud.ShowBook(false);
                     }
+                    else if (loop == 5)
+                    {
+                        Log(story.Use("calendar"));
+                        Log("room4 with 5 but no letter: " + story.Use("room4"));
+                        Expect(LoopMemory.Fragments.Count == 5 && !story.room4Door.IsOpen, "room 4 stays locked without the letter");
+                    }
+                    else if (loop == 6) Log(story.Use("glass"));
                     else
                     {
+                        Log(story.Use("letter"));
                         Log("hint: " + story.NextHint());
+                        Expect(story.NextHint() == Loc.T("hint.awaken", Loc.T("hint.more.cage")), "hint points at the missing truth piece (cage)");
                         Log("room4: " + story.Use("room4"));
+                        Expect(story.room4Door.IsOpen, "room 4 opens once the letter is found");
                         yield return new WaitForSeconds(2.5f);
                         story.Use("typewriter");
                         yield return WaitEnding("Awaken");
+                        yield break;
+                    }
+                    break;
+
+                case "truth":
+                    // 最短真相路线：错音 → 杯子 → 信 → 笼子 → 电报 → 墓碑，第 6 稿在打字机前自己写下一句
+                    if (loop == 1)
+                    {
+                        yield return SkipTo(director, 30f);
+                        Log("prof: " + story.Choose("npc.prof", "d.prof.wrong"));
+                        Expect(LoopMemory.Has("piano"), "piano fragment");
+                    }
+                    else if (loop == 2) Log(story.Use("glass"));
+                    else if (loop == 3)
+                    {
+                        Log(story.Use("letter"));
+                        Log("cage too early: " + story.Choose("npc.prof", "d.prof.onpurpose"));
+                        Expect(!LoopMemory.Has("cage"), "cage needs draft 15");
+                    }
+                    else if (loop == 4)
+                    {
+                        Log("prof: " + story.Choose("npc.prof", "d.prof.onpurpose"));
+                        Expect(LoopMemory.Has("cage"), "cage fragment from draft 15");
+                    }
+                    else if (loop == 5)
+                    {
+                        Log(story.Use("telegraph"));
+                        Expect(story.NextHint() == Loc.T("hint.awaken", Loc.T("hint.more.grave")), "hint points at the grave");
+                    }
+                    else
+                    {
+                        Log(story.Use("grave"));
+                        Expect(Story.TruthKnown, "all truth pieces");
+                        Log("hint: " + story.NextHint());
+                        Expect(story.NextHint() == Loc.T("hint.truth"), "truth hint");
+                        Log("room4: " + story.Use("room4"));
+                        Expect(story.room4Door.IsOpen, "room 4 open");
+                        yield return new WaitForSeconds(2.5f);
+                        var hud = FindFirstObjectByType<Hud>();
+                        // 选项走远了会自动关：先像玩家一样站到 4 号房里、打字机前
+                        var cc = FindFirstObjectByType<FirstPersonController>().GetComponent<CharacterController>();
+                        cc.enabled = false; cc.transform.position = Story.IntoRoom4[1]; cc.enabled = true;
+                        yield return null;
+                        story.Use("typewriter");
+                        yield return null;
+                        Expect(hud.ChoicesOpen && !story.Ended, "typewriter waits and offers a choice");
+                        Shot("truth_choice");
+                        hud.CloseChoices();
+                        Log("typewriter: " + story.Choose("typewriter", "d.type.write"));
+                        for (float t = 0; t < 15f && !hud.Typing; t += Time.deltaTime) yield return null;
+                        Expect(hud.Typing, "player types the last line");
+                        yield return new WaitForSecondsRealtime(6.5f);   // 打到最后一行、停留期间
+                        Shot("truth_typing");
+                        yield return WaitEnding("Truth");
                         yield break;
                     }
                     break;
@@ -222,7 +298,7 @@ namespace MercyCreek
         IEnumerator WaitEnding(string expected)
         {
             var hud = FindFirstObjectByType<Hud>();
-            for (float t = 0; t < 20f && !hud.EndingShown; t += Time.deltaTime) yield return null;
+            for (float t = 0; t < 45f && !hud.EndingShown; t += Time.deltaTime) yield return null;   // 真相要先打完一页字
             Shot("ending_" + expected.ToLower());
             yield return null;
             ShareCard.Capture(Path.Combine(_dir, "share_" + expected.ToLower() + ".png"));

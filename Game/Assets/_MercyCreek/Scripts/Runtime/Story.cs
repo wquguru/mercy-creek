@@ -7,7 +7,7 @@ using UnityEngine;
 namespace MercyCreek
 {
     /// <summary>
-    /// 剧本的唯一实现：每轮时间表、碎片、对话、三个结局、按稿数解锁的地点。规则见 docs/GAME_DESIGN.md，文本见 Loc。
+    /// 剧本的唯一实现：每轮时间表、碎片、对话、四个结局、按稿数解锁的地点。规则见 docs/GAME_DESIGN.md，文本见 Loc。
     /// 场景引用由 SetupSaloon 填好。时间表按 LoopDirector.Elapsed 触发；快进（Skip）时错过的事件以 instant 方式补上。
     /// </summary>
     public class Story : MonoBehaviour
@@ -34,7 +34,7 @@ namespace MercyCreek
         public Npc driver;
         public Npc[] townsfolk;
         public AudioSource telegraph, bell;
-        public AudioClip bellThree;
+        public AudioClip bellThree, bellFour;
         public SwingDoor graveGate;
         public GameObject graveGateNote;
         public Transform canvasFlap;               // 画布上能撕开的那一块（原点在铰链边）
@@ -255,7 +255,17 @@ namespace MercyCreek
         // 交互：Interactable.id → 提示 / 结果
         // =====================================================================
 
-        bool CanTear => StreetWritten && LoopMemory.Has("door") && LoopMemory.Has("calendar") && !CanvasTorn;
+        /// <summary>画布：第 3 稿起才撕得开（第 2 稿刚写出街道，世界还太"薄"）。</summary>
+        public static bool CanvasWritten => LoopMemory.Loop >= 3;
+        bool KnowsCanvasWay => LoopMemory.Has("door") && LoopMemory.Has("calendar");
+        bool CanTear => CanvasWritten && KnowsCanvasWay && !CanvasTorn;
+
+        /// <summary>4 号房：信上写着"去四号房"——没有信，记得再多也打不开。</summary>
+        public const int Room4Needs = 5;
+        public static bool AwakenReady => LoopMemory.Has("letter") && LoopMemory.Fragments.Count >= Room4Needs;
+        /// <summary>真相要的四块：自己的信、笼子、作者的电报、被划掉的玛莎。</summary>
+        public static readonly string[] TruthPieces = { "letter", "cage", "telegram", "grave" };
+        public static bool TruthKnown => TruthPieces.All(LoopMemory.Has);
 
         /// <summary>返回 null 表示现在不能交互。</summary>
         public string Prompt(string id) => id switch
@@ -286,6 +296,7 @@ namespace MercyCreek
                 case "door": return Remember("door", "f.door");
                 case "canvas":
                     if (CanTear) { StartCoroutine(TearCanvas()); return Loc.T("f.canvas.tear"); }
+                    if (KnowsCanvasWay && !CanvasTorn) return Loc.T("f.canvas.notyet");
                     return Remember("door", "f.canvas");
                 case "glass":
                     {
@@ -308,7 +319,12 @@ namespace MercyCreek
                 case "dartboard": return Loc.T("f.dartboard");
                 case "bottles": return Loc.T("f.bottles");
                 case "room4": return UseRoom4();
-                case "typewriter": StartCoroutine(AwakenEnding()); return null;
+                case "typewriter":
+                    if (!TruthKnown) { StartCoroutine(AwakenEnding()); return null; }
+                    hud.Say(Loc.T("f.typewriter.wait"), 8f);
+                    _typewriterWaiting = true;
+                    OpenChoices(Loc.T("name.typewriter"), typewriterPaper, TypewriterOptions());
+                    return null;
                 case "backdoor": return Loc.T("f.backdoor.locked");
                 case "npc.gus": OpenDialogue(gus, GusOptions()); return null;
                 case "npc.prof": OpenDialogue(prof, ProfOptions()); return null;
@@ -341,8 +357,9 @@ namespace MercyCreek
 
         string UseRoom4()
         {
-            if (LoopMemory.Fragments.Count < 4)
-                return Loc.T(CraneGone ? "f.room4.crane" : "f.room4.locked");
+            if (!AwakenReady)
+                return Loc.T(CraneGone ? "f.room4.crane" : "f.room4.locked") + "\n" +
+                       (LoopMemory.Has("letter") ? Loc.T("f.room4.count", LoopMemory.Fragments.Count) : Loc.T("f.room4.noletter"));
             room4Door.Open();
             Sfx.I?.PlayAt(Sfx.I.doorOpen, new Vector3(0, 4.3f, 10f), 0.8f);
             StartCoroutine(TypewriterClicks());
@@ -354,6 +371,7 @@ namespace MercyCreek
             var pos = typewriterPaper ? typewriterPaper.position : new Vector3(0, 4f, 12.5f);
             while (!Ended)
             {
+                if (_typewriterWaiting) { yield return null; continue; }   // 真相：打字机停下来等内尔
                 Sfx.I?.Type(pos);
                 yield return new WaitForSeconds(UnityEngine.Random.Range(0.09f, 0.28f));
                 if (UnityEngine.Random.value < 0.04f) { Sfx.I?.PlayAt(Sfx.I.typeBell, pos, 0.6f); yield return new WaitForSeconds(0.6f); }
@@ -386,10 +404,17 @@ namespace MercyCreek
         {
             int n = LoopMemory.Fragments.Count;
             if (n == 0) return Loc.T("hint.none");
-            if (n >= 4) return Loc.T("hint.awaken");
+            if (AwakenReady)
+            {
+                if (TruthKnown) return Loc.T("hint.truth");
+                string missing = TruthPieces.First(f => !LoopMemory.Has(f));
+                return Loc.T("hint.awaken", Loc.T("hint.more." + missing));
+            }
             bool door = LoopMemory.Has("door"), cal = LoopMemory.Has("calendar");
-            if (door && cal && StreetWritten) return Loc.T("hint.escape");
-            if (door && !cal && StreetWritten) return Loc.T("hint.calendar");
+            if (door && cal) return Loc.T(CanvasWritten ? "hint.escape" : "hint.escape.wait");
+            if (LoopMemory.Has("letter")) return Loc.T("hint.room4", n);
+            if (LoopMemory.Has("glass")) return Loc.T("hint.letter");
+            if (door && StreetWritten) return Loc.T("hint.calendar");
             if (StreetWritten && !door) return Loc.T("hint.street");
             return Loc.T("hint.count", n);
         }
@@ -411,6 +436,7 @@ namespace MercyCreek
             "npc.gus" => GusOptions(),
             "npc.prof" => ProfOptions(),
             "npc.crane" => CraneOptions(),
+            "typewriter" => TruthKnown && room4Door.IsOpen && !Ended ? TypewriterOptions() : new List<Option>(),
             _ => new List<Option>(),
         };
 
@@ -458,16 +484,28 @@ namespace MercyCreek
             return o;
         }
 
+        /// <summary>真相碎片齐了：打字机停下，等内尔决定是看它打完，还是自己写。</summary>
+        List<Option> TypewriterOptions() => new()
+        {
+            Opt("d.type.watch", () => { _typewriterWaiting = false; StartCoroutine(AwakenEnding()); return null; }),
+            Opt("d.type.write", () => { StartCoroutine(TruthEnding()); return Loc.T("f.truth.sit"); }),
+        };
+        bool _typewriterWaiting;
+
         void OpenDialogue(Npc npc, List<Option> options)
         {
             npc.LookAtPlayer(8f);
-            hud.ShowChoices(npc, options.Select(o => (Loc.T(o.key), (Action)(() =>
-            {
-                Sfx.I?.Play2D(Sfx.I.click, 0.6f);
-                hud.Say(o.pick(), 7f);
-                if (npc.rig) npc.rig.talk = 1f;
-            }))).ToList());
+            hud.ShowChoices(npc, Wrap(options, () => { if (npc.rig) npc.rig.talk = 1f; }));
         }
+
+        void OpenChoices(string title, Transform anchor, List<Option> options) => hud.ShowChoices(title, anchor, Wrap(options, null));
+
+        List<(string, Action)> Wrap(List<Option> options, Action after) => options.Select(o => (Loc.T(o.key), (Action)(() =>
+        {
+            Sfx.I?.Play2D(Sfx.I.click, 0.6f);
+            hud.Say(o.pick(), 7f);
+            after?.Invoke();
+        }))).ToList();
 
         /// <summary>测试用：直接选某个选项。</summary>
         public string Choose(string npcId, string optionKey)
@@ -480,7 +518,7 @@ namespace MercyCreek
         // 结局
         // =====================================================================
 
-        public enum Ending { None, Reset, Escape, Awaken }
+        public enum Ending { None, Reset, Escape, Awaken, Truth }
 
         IEnumerator ResetEnding()
         {
@@ -517,6 +555,33 @@ namespace MercyCreek
             Finish(Ending.Awaken, Loc.T("end.awaken"), Loc.T("end.awaken.sub", LoopMemory.Draft, secs / 60, secs % 60));
         }
 
+        /// <summary>
+        /// 真相：打字机停了，内尔自己打出最后一句；四点的钟第一次敲响，之后才起结局音乐。
+        /// 时间从这里冻结——这一稿不会再被重置。
+        /// </summary>
+        IEnumerator TruthEnding()
+        {
+            Ended = true;
+            _typewriterWaiting = false;
+            int secs = Mathf.FloorToInt(LoopMemory.TotalSeconds);
+            if (director) director.enabled = false;
+            Sfx.I?.StopPiano(3f);
+            Sfx.I?.FadeAmbience(0f, 3f);
+            if (telegraph) telegraph.Stop();
+            var player = FindFirstObjectByType<FirstPersonController>();
+            if (player) player.InputLocked = true;
+            yield return new WaitForSeconds(3f);
+            for (float t = 0; t < 1f; t += Time.deltaTime / 1.5f) { hud.Fade = t; yield return null; }
+            hud.Fade = 1f;
+            hud.ClearSay();
+            yield return hud.TypeCard(new[] { Loc.T("truth.1", LoopMemory.Draft), Loc.T("truth.2"), Loc.T("truth.3"), Loc.T("truth.4") }, 4f);
+            hud.Fade = 1f;
+            if (bellFour) Sfx.I?.Play2D(bellFour, 0.8f);
+            Finish(Ending.Truth, Loc.T("end.truth"), Loc.T("end.truth.sub", LoopMemory.Draft, secs / 60, secs % 60), music: false);
+            yield return new WaitForSeconds(bellFour ? 11f : 1f);
+            Sfx.I?.PlayMusic(Sfx.I.endingTheme);
+        }
+
         /// <summary>测试用：在虚空里直接走到终点。</summary>
         public void DebugEnterVoid()
         {
@@ -528,7 +593,7 @@ namespace MercyCreek
             CheckVoid(); CheckVoid();
         }
 
-        void Finish(Ending ending, string title, string sub)
+        void Finish(Ending ending, string title, string sub, bool music = true)
         {
             Ended = true;
             LoopMemory.LastEnding = ending.ToString();
@@ -537,7 +602,7 @@ namespace MercyCreek
             Sfx.I?.StopPiano(1.5f);
             Sfx.I?.FadeAmbience(0f, 2f);
             if (telegraph) telegraph.Stop();
-            if (ending != Ending.Escape) Sfx.I?.PlayMusic(Sfx.I.endingTheme);
+            if (music && ending != Ending.Escape) Sfx.I?.PlayMusic(Sfx.I.endingTheme);
             hud.ShowEnding(title, sub);
             Debug.Log($"[Story] ending {ending} loop={Loop} fragments={string.Join(",", LoopMemory.Fragments)}");
         }

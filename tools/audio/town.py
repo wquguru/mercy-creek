@@ -592,6 +592,21 @@ def church_bell_three():
     return fade(y, fin=0.005, fout=2.5)
 
 
+def church_bell_four():
+    """真相结局"教堂的钟第一次敲响了四下"：与 church_bell_three 同一套处理，只是多一下、尾巴更长。总长 17 s。"""
+    n = secs(17.0)
+    x = np.zeros(n)
+    for k, (t0, s) in enumerate([(0.08, 1.0), (3.28, 0.93), (6.48, 0.97), (9.68, 1.0)]):
+        place(x, church_bell_strike(2220 + k, s, 7.5), t0, gain=s)
+    x = lowpass(x, 2200, 2)
+    x = peaking(x, 4000, 0.7, -6.0)
+    x = highpass(x, 90, 2)
+    echo = np.zeros(n)
+    place(echo, lowpass(x, 1200, 2), 0.42, gain=0.18)
+    y = add_reverb(pan(x + echo, 0.08), FAR_IR_ST, wet=0.9, dry=0.45)[:n]
+    return fade(y, fin=0.005, fout=3.0)
+
+
 # ================================================================ 街道环境
 
 def _bird_phrase(seed):

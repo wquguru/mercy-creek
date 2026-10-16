@@ -50,8 +50,8 @@ Reviews/             评审截图（unity/ 与 autotest/ 每次重新生成，gi
 | 重下 CC0 资产 | `python3 tools/fetch_assets.py` |
 | 重建酒馆模型并导出 | `blender --background --python tools/blender/build_saloon.py -- --export Game/Assets/_MercyCreek/Art/Saloon/Saloon.gltf` |
 | 重建场景 + Mac 构建 + 截图 | `tools/review.sh` |
-| 同上并自动通关（三个结局 + town 路线 + walls 隐形墙各一遍，含标题 / 开场 / 记忆本 / 分享卡片截图） | `tools/review.sh --test` |
-| 像真人一样试玩三个结局（静音、后台，约 12 分钟；看 `Reviews/playbot/<路线>/`） | `tools/playbot.sh` |
+| 同上并自动通关（四个结局 + town 路线 + walls 隐形墙各一遍，含标题 / 开场 / 记忆本 / 分享卡片截图） | `tools/review.sh --test` |
+| 像真人一样试玩四个结局（静音、后台，约 20 分钟；看 `Reviews/playbot/<路线>/`） | `tools/playbot.sh` |
 | 只截图（默认第 3 稿；`SHOT_ARGS="-loop 1"` 拍第 1 稿） | `tools/review.sh --no-setup --no-build` |
 | Windows 构建（Mono，只能构建不能在本机运行；输出 `Game/Builds/Win/` 与 zip） | `tools/build_win.sh` |
 | Web 构建 | `tools/build_web.sh`（输出 `Game/Builds/Web/`，约 92MB） |
@@ -60,7 +60,7 @@ Reviews/             评审截图（unity/ 与 autotest/ 每次重新生成，gi
 | 排查画面（关掉某个光照成分） | `SHOT_ARGS="-debug noprobe -only bar -times 8" tools/review.sh --no-setup --no-build` |
 | 改了 Loc 文本后重新裁字体 | `.venv/bin/python tools/fonts/make_font.py` |
 | 录一段试玩视频（PlayBot 自动玩 + 30fps 逐帧 JPG + AudioRenderer 同步录游戏声；输出 frames/、audio.f32、frames.tsv） | `"Game/Builds/Mac/MercyCreek.app/Contents/MacOS/Mercy Creek" -playbot <目录>/pb -route awaken -record <目录> -lang zh -screen-width 1660 -screen-height 1080 -screen-fullscreen 0`（约为游戏时间的 2.5 倍；完整觉醒路线约 5GB 帧） |
-| 发布预告片（约 85 秒；镜头 / 配乐 / 字幕都由 `tools/trailer/edl.py` 剪辑表驱动；约 20 分钟） | `tools/make_trailer.sh`（`--reuse` 复用已拍的镜头；只重拍某几个：删掉 `Reviews/trailer/shots/<名字>.txt`） |
+| 发布预告片（约 85 秒；镜头 / 配乐 / 字幕都由 `tools/trailer/edl.py` 剪辑表驱动；约 20 分钟） | `tools/make_trailer.sh`（`--reuse` 复用已拍的镜头；只重拍某几个：删掉 `Reviews/trailer/shots/<名字>.txt`）；英文字幕版：先出中文版，再 `tools/make_trailer.sh --reuse --en`（文件名带 `_en`） |
 | 组装落地页到 dist/site（不发布） | `tools/make_site.sh` |
 | 截图对照表 | `python3 tools/contact_sheet.py Reviews/unity Reviews/unity/sheet.jpg` |
 
@@ -92,7 +92,7 @@ Reviews/             评审截图（unity/ 与 autotest/ 每次重新生成，gi
 | M1 | ◐ 画面过关 | APV 烘焙 GI，大厅不再死黑；墙纸有纹理和凹凸；吧台无白色溢光；窗外有远景；自动钢琴为真实模型；4 个评审机位截图都能当宣传图 |
 | M2 | ☑ 剧本 | `GAME_DESIGN.md` 写完：角色设定、每轮事件时间表（≥6 轮变化）、8–12 个碎片、3 个结局的触发条件与文本 |
 | M3 | ◐ NPC | 陌生人、酒保、钢琴师、楼上房客 4 个角色：有模型、有骨骼、能按时间表走位 / 做动作 / 看向玩家；不穿模、不滑步 |
-| M4 | ☑ 对话与事件 | 走近 NPC 按 E 对话；碎片解锁对话选项；事件按时间表触发并随轮数变化；3 个结局都可达；AutoTest 覆盖 3 个结局 |
+| M4 | ☑ 对话与事件 | 走近 NPC 按 E 对话；碎片解锁对话选项；事件按时间表触发并随轮数变化；4 个结局都可达；AutoTest 覆盖 4 个结局 |
 | M5 | ◐ 声音 | 室内环境音、风、脚步（木地板）、钟摆、自动钢琴曲（每轮细微变化，作为线索）、重置音效、结局音乐；音量混合合理 |
 | M6 | ☑ 界面与流程 | 标题画面、设置（鼠标灵敏度、音量、语言中 / 英）、暂停菜单、存档（当前轮数与碎片）、内嵌 OFL 中文字体、分享卡片（轮数 + 用时 + 结局徽记，可保存 PNG） |
 | M7 | ☑ Web 版 | WebGPU 构建可在 Chrome 打开并通关；首包 ≤ 200MB；加载进度条；不支持 WebGPU 时显示说明页 |

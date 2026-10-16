@@ -3,7 +3,10 @@ score.py（配乐与混音）和 edit.py（合成画面）都从这里读，改�
 
 时间单位：秒，帧率 30。第一幕剪辑点落在华尔兹的小节线上（一小节 1.6071 s）。
 """
+import os
+
 FPS = 30
+LANG = os.environ.get("TRAILER_LANG", "zh")   # zh / en：只换字幕、字卡与片尾文字，画面和配乐不变
 BAR = 3 * 60.0 / 112          # 华尔兹一小节
 W0 = 6.6                       # 华尔兹（从第 5 小节旋律进入处）在片中开始的时间
 WALTZ_IN = 4 * BAR             # 从 wav 的第 4 小节末（旋律进入）开始放
@@ -76,6 +79,37 @@ TEXTS = [
     (79.6, END, "endcard", ""),
 ]
 
-TYPE_RATE = 0.11   # 打字机逐字间隔
+# 英文版：同样的时间点，文本与游戏内英文（Loc.cs）一致
+TEXTS_EN = [
+    (1.2,  4.6,  "type_card", "June 14, 1882. Three in the afternoon."),
+    (B(6) + 0.45, B(8) - 0.1, "sub", "\u201cGonna be a fine day, Nell.\u201d"),
+    (B(8) + 0.45, B(10) - 0.1, "sub", "\u201cGonna be a fine day, Nell.\u201d"),
+    (26.6, 28.2, "card", "Every afternoon, the same."),
+    (29.3, 32.2, "over", "The same stagecoach."),
+    (36.4, 39.7, "over", "The same stranger."),
+    (40.2, 42.8, "over", "His notebook says what you'll do next."),
+    (43.2, 45.3, "type", "To Mr. Crane: Draft 12 void."),
+    (45.9, 48.3, "over", "A blank headstone, waiting for a name."),
+    (51.85, 54.3, "sub", "\u201cGonna be a fine day, Martha\u2014Nell.\u201d"),
+    (54.7, 56.8, "card", "This afternoon has been written eleven times."),
+    (59.6, 59.95, "draft", "DRAFT 13"),
+    (60.95, 61.25, "draft", "DRAFT 14"),
+    (62.75, 63.0, "draft", "DRAFT 15"),
+    (64.3, 64.5, "draft", "DRAFT 16"),
+    (67.6, 71.4, "type", "...at last, she woke."),
+    (73.0, 79.0, "title", "MERCY CREEK"),
+    (75.4, 79.0, "tagline", "Which draft will wake you?"),
+    (79.6, END, "endcard", ""),
+]
+# 片尾卡：标语、平台、上线、"实机画面"
+ENDCARD = {
+    "zh": ("第几稿，你才会醒来？", "macOS  ·  网页版", "即 将 推 出", "游戏实机画面"),
+    "en": ("Which draft will wake you?", "macOS  \u00b7  Web", "C O M I N G   S O O N", "Captured in game"),
+}[LANG]
+if LANG == "en":
+    TEXTS = TEXTS_EN
+
+# 打字机逐字间隔：英文字母多，按字符数减半，整句用时和中文相近
+TYPE_RATE = 0.11 if LANG == "zh" else 0.055
 DRAFT_HITS = [t for (t, _, k, _) in TEXTS if k == "draft"]
 CARD_HITS = [26.6, 54.7]
