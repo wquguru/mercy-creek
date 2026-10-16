@@ -1,168 +1,76 @@
+<div align="center">
+
 # Mercy Creek
 
-> 每天下午三点，一切重来。
+**每天下午三点，一切重来。**
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Unity](https://img.shields.io/badge/Unity-6.3_URP-000000?logo=unity&logoColor=white)](https://unity.com/)
+[![Blender](https://img.shields.io/badge/Blender-5.2-F5792A?logo=blender&logoColor=white)](https://www.blender.org/)
+[![Platform](https://img.shields.io/badge/platform-macOS_%7C_Web_(WebGPU)-lightgrey)](#从零构建)
+[![Assets](https://img.shields.io/badge/assets-CC0_%7C_OFL_%7C_procedural-brightgreen)](docs/ASSETS.md)
+[![Built with Claude Code](https://img.shields.io/badge/built_with-Claude_Code-D97757?logo=claude&logoColor=white)](https://claude.com/claude-code)
+[![Last commit](https://img.shields.io/github/last-commit/wquguru/mercy-creek)](https://github.com/wquguru/mercy-creek/commits/main)
 
 ![游戏截图：第 14 稿的主街，驿站马车停在酒馆门口，街道西头是一块画布](docs/images/screenshot.jpg)
 
-一个 25–35 分钟的写实西部循环短篇。你扮演 1882 年小镇酒馆的女招待内尔。同一个下午，她要一遍又一遍地过：同一首钢琴曲，同一辆驿站马车，送来同一个陌生人。每过一遍叫"一稿"，每一稿只能记住一件事带到下一稿。慢慢你会发现，这个小镇是有人正在"写"出来的。
+</div>
 
-一开始世界里只有酒馆，门外的街像是画在布上的。往后每一稿，作者多写一点：主街、电报局、教堂墓地，还有街道尽头那块画布。结局有三个：留下、出逃、觉醒。
+一个 25–35 分钟的写实西部循环短篇。你是 1882 年小镇酒馆的女招待内尔，同一个下午一遍遍重来，每一遍叫"一稿"，每稿只能带走一段记忆。世界也随稿数被"写"出来：先是酒馆，然后是主街、电报局、教堂墓地，以及街道尽头那块画布。三个结局：留下、出逃、觉醒。
 
-这个项目是一个人加 AI（Claude Code）做的。引擎用 Unity 6.3 URP，有 macOS 原生版和网页版（WebGPU）。仓库里的模型、贴图、音频、场景都由脚本生成，没有手工摆放的东西。
+一个人加 AI（Claude Code）开发。模型、贴图、音频、场景全部由脚本生成，没有手工摆放的东西。
 
-## 致谢
-
-特别感谢[网易叭哥说](https://bug.youdao.com/#/)提供的永久免费中文翻译功能。按一下 Fn + Left Shift 就能开始说中文，它会识别出来，直接转成英文文字。这个项目里跟 AI 的大部分交流，都是这样张嘴说出来的。用母语把想法讲清楚，比对着键盘斟酌英文快得多，对 Vibe Coding 帮助很大。
-
-<img src="docs/images/voice-translate.png" alt="网易叭哥说的语音翻译：说中文，转成英文文字" width="600">
-
-## 操作
-
-| 按键 | 作用 |
-|---|---|
-| WASD / Shift | 移动 / 快走 |
-| 鼠标 | 看 |
-| E 或左键 | 交互 |
-| 1–4 / 滚轮 | 选择对话 |
-| Tab | 记忆本（已经记住的事、剩余时间、下一步提示） |
-| Esc | 暂停；菜单里可以"结束这个下午"，直接进入下一稿 |
+**操作**：WASD 移动 · Shift 快走 · 鼠标看 · E 交互 · 1–4 选对话 · Tab 记忆本 · Esc 暂停（可"结束这个下午"）
 
 ## 从零构建
 
-### 1. 准备环境
-
-| 工具 | 版本 | 用途 |
-|---|---|---|
-| Unity | 6000.3.26f1，需要 Mac Build Support (IL2CPP) 和 Web 模块 | 游戏引擎 |
-| Blender | 5.2，命令行里能直接调用 `blender` | 用脚本建模 |
-| Python | 3（脚本会自动建 `.venv` 并装依赖） | 贴图、音频、字体、下载素材 |
-| ffmpeg | 任意较新版本 | 音频转码、合成宣传片 |
-| Node.js | 较新的 LTS 版本 | 只有网页版冒烟测试需要 |
-
-开发机是 macOS（Apple Silicon）。脚本都按 macOS 和 zsh 写，Windows 和 Linux 没有测试过。
-
-### 2. 克隆并一键还原
+需要 macOS（Apple Silicon 上开发）、Unity 6000.3.26f1（含 Mac 和 Web 模块）、Blender 5.2（命令行能调用 `blender`）、Python 3、ffmpeg；网页测试另需 Node.js。
 
 ```sh
-git clone https://github.com/wquguru/mercy-creek.git
-cd mercy-creek
-tools/bootstrap.sh
+git clone https://github.com/wquguru/mercy-creek.git && cd mercy-creek
+tools/bootstrap.sh    # 看到 AUTOTEST ALL PASS 即成功，游戏在 Game/Builds/Mac/MercyCreek.app
 ```
 
-仓库只放源码和生成脚本，素材和模型都不提交。`bootstrap.sh` 会按顺序把它们全部还原出来，最费时间的是下载素材和烘焙光照。
+仓库只放源码和生成脚本，`bootstrap.sh` 依次还原所有产物：
 
-1. **下载素材**：`tools/fetch_assets.py` 从 Poly Haven 和 ambientCG 下载 CC0 模型、材质和天空 HDRI，放到 `art/source/`。
-2. **生成贴图**：`tools/textures/`、`gen_prop_textures.py`、`gen_street_signs.py` 和 `gen_edge_textures.py` 生成墙纸、招牌、告示、画布底稿等。
-3. **生成模型**：`tools/blender/build_*.py` 在 Blender 后台运行，依次生成酒馆、自动钢琴、木头人偶、木头马、驿站马车、道具、主街、小镇和街道两头的教堂、墓地、画布，导出成 glTF。
-4. **合成音频**：`tools/build_audio.sh` 用 Python 合成钢琴（包括每一稿弹错音的版本）、马蹄、车轮、钟声、环境声等，不用任何录音素材。
-5. **生成场景**：Unity 在批处理模式下运行 `SetupSaloon.cs` 和 `SetupTown.cs`，生成整个场景，并烘焙午后和黄昏两套光照。
-6. **构建并测试**：`tools/review.sh --test` 构建 Mac 版，在固定机位截评审图，再自动打通五条测试路线。
+1. **下载素材**：从 Poly Haven、ambientCG 下载 CC0 模型、材质、HDRI
+2. **生成贴图**：墙纸、招牌、告示、画布底稿（Python + Pillow）
+3. **生成模型**：`tools/blender/build_*.py` 后台建模——酒馆、钢琴、木头人偶、马、马车、街道、教堂墓地、画布
+4. **合成音频**：钢琴、马蹄、钟声、环境声全部程序合成，不用采样
+5. **生成场景**：Unity 批处理运行 `SetupSaloon.cs` / `SetupTown.cs`，烘焙午后、黄昏两套光照
+6. **构建测试**：构建 Mac 版、固定机位截图、自动通关五条路线
 
-最后看到 `AUTOTEST ALL PASS` 就说明成功了。游戏在 `Game/Builds/Mac/MercyCreek.app`。
-
-### 3. 常用命令
-
-| 要做的事 | 命令 |
+| 常用命令 | |
 |---|---|
-| 改了脚本后重新生成场景、构建、截图、跑自动测试 | `tools/review.sh --test` |
-| 像真人一样把三个结局各玩一遍（静音、后台运行，不占用鼠标） | `tools/playbot.sh awaken escape reset` |
-| 构建网页版 | `tools/build_web.sh` |
-| 本地试玩网页版 | `python3 -m http.server -d Game/Builds/Web 8700`，然后打开 http://localhost:8700/?lang=zh |
-| 生成宣传片 | `tools/make_trailer.sh` |
-| 组装落地页 | `tools/make_site.sh`（输出到 `dist/site`） |
+| `tools/review.sh --test` | 重建场景 → 构建 → 截图 → 自动通关 |
+| `tools/playbot.sh awaken escape reset` | 像真人一样玩完三个结局（静音、后台） |
+| `tools/build_web.sh` | 构建网页版，`python3 -m http.server -d Game/Builds/Web 8700` 本地试玩 |
+| `tools/make_trailer.sh` / `tools/make_site.sh` | 生成宣传片 / 落地页 |
 
-完整命令和参数见 [`AGENTS.md`](AGENTS.md)，技术细节见 [`docs/TECH.md`](docs/TECH.md)。
+更多见 [`AGENTS.md`](AGENTS.md) 和 [`docs/TECH.md`](docs/TECH.md)。
 
 ## 方法论：让 AI 自己把游戏做完
 
-这个项目想验证一件事：在人只定方向、不碰引擎编辑器的情况下，AI 能不能独立做完一个完整、能玩、画面过得去的小游戏。从第一个原型到现在的版本大约用了一天。下面这几条是做下来觉得最管用的。
+想验证的是：人只定方向、不碰编辑器，AI 能不能独立做完一个能玩、画面过得去的小游戏。从原型到现在大约一天。最管用的几条：
 
-### 1. 先写文档，再写代码
+1. **先写文档再写代码**。剧本（`GAME_DESIGN.md`）、美术、技术、总说明（`AGENTS.md`）先写好，改动先改文档。AI 换个对话就失忆，文档就是它的记忆本。
+2. **一切都能用脚本重建**。场景、模型、音频、文本全是代码，能 diff、能回滚、删了能重建。写生成脚本正好是 AI 最擅长的事。
+3. **用截图代替"看一眼"**。每次构建自动在固定机位、三个时刻截图，AI 读图查漏光、穿模、比例、颜色。开发就是"改脚本 → 重建 → 截图 → 看图"的循环。
+4. **两层自动测试**。AutoTest 直接调剧情接口，验证逻辑；PlayBot 用虚拟键盘从标题画面真玩一遍，寻路、瞄准、按键、选对话，记录屏幕上的每句字和每个异常。墓地门打不开、马车点不到这类问题，只有第二层抓得到。
+5. **每个决定都记下来**。AI 自己拿的主意按"决定 / 理由 / 替代"记在 `docs/DECISIONS.md`，比如为什么用木头人偶而不是写实角色。
+6. **定死边界**。素材只用 CC0、OFL 或自制并逐项登记；原创故事，不借用任何影视作品；公开、部署、发帖先问人。
+7. **小步走，每步都能玩**。M0 原型 → M1 画面 → M2–M6 内容 → M7 网页版 → M8 宣传片和落地页 → v2 小镇 → PlayBot 试玩修复，每一步都是能跑的提交。
 
-动手之前先把这几份文档写出来，之后每次改动都先改文档：
+## 致谢
 
-- `docs/GAME_DESIGN.md`：剧本、时间表、碎片、结局。这是剧情的唯一依据，代码按它来实现。
-- `docs/ART_STYLE.md`：画面方向、色调、参考。
-- `docs/TECH.md`：版本、坐标约定、每个运行时系统负责什么、踩过的坑。
-- `AGENTS.md`：给 AI 和人看的总说明，包括规则、命令表和路线图。
+感谢[网易叭哥说](https://bug.youdao.com/#/)提供的永久免费中文翻译功能：按 Fn + Left Shift 说中文，直接转成英文文字。这个项目里跟 AI 的大部分交流都是这样说出来的，用母语讲清想法比斟酌英文快得多，对 Vibe Coding 很有帮助。
 
-AI 换一个对话就会失忆，文档就是它的"记忆本"。新对话开始时读一遍 `AGENTS.md`，就能接着干活。
-
-### 2. 一切都能用脚本重建
-
-场景不在编辑器里手工摆，模型不在 Blender 里手工捏，声音不用录音。这些全部是代码：
-
-- **模型**：Blender Python 脚本。木头人偶和木头马是刚体关节，没有蒙皮，动画直接在代码里算。
-- **场景**：`SetupSaloon.cs` / `SetupTown.cs` 每次从零生成整个场景。
-- **音频**：用 Python 程序合成（弦振动模型、模态共振、滤波噪声），不用任何采样。
-- **文本**：所有给玩家看的字都放在 `Loc.cs` 的中英文本表里。字体按实际用到的字裁剪成子集。
-
-这样做的好处是，AI 改什么都只是改文本文件，能 diff，能回滚，删掉重建也没关系。坏处是要多花时间写生成脚本，但对 AI 来说这反而是它最擅长的事。
-
-### 3. 用截图代替"看一眼"
-
-AI 看不到屏幕，那就让游戏自己截图给它看。`review.sh` 每次构建后都在固定机位、固定时间点截图（午后、傍晚、黄昏三个时刻），AI 读图检查漏光、穿模、比例、颜色这些问题。Blender 脚本也会先渲染评审图再导出。
-
-整个开发就是一个循环：改脚本 → 重建 → 截图 → 看图 → 再改。
-
-### 4. 两层自动测试
-
-- **自动通关（AutoTest）**：直接调用剧情接口，验证五条路线的逻辑都能走通，速度快。
-- **自动试玩（PlayBot）**：从标题画面开始，用虚拟键盘走路，运行时烘焙导航网格来寻路，对准物件、等提示出现再按 E，用数字键选对话。屏幕上出现的每一句字都写进日志，走不动、瞄不到、缺文本、报错都记为问题。
-
-第二层抓到了第一层抓不到的问题。比如墓地的门根本没打开，因为自动通关不需要真的走进去。又比如马车外面的大碰撞盒挡住了准星，车夫点不到。现在的规矩是：改了玩法，必须跑到 `PLAYBOT ALL CLEAN` 才能提交。
-
-### 5. 把每个决定写下来
-
-AI 自己拿主意的地方都记在 `docs/DECISIONS.md` 里，格式固定为"决定 / 理由 / 替代方案"。比如角色为什么用木头人偶，而不是写实的人：一来剧情上本来就是"作者还没给他们画脸"，二来全部用脚本生成、授权也干净，三来刚体没有蒙皮穿模的问题。以后回头看，或者换人接手，都知道当时为什么这么做，以及有哪些别的路可以走。
-
-### 6. 定死边界
-
-有几条规则写在 `AGENTS.md` 最前面，AI 不能越过：
-
-- 素材只能是 CC0、公有领域、SIL OFL 或者自己生成的，每一项都登记在 `docs/ASSETS.md`。
-- 原创故事，不借用任何影视作品的名字、角色、台词、配乐或具体剧情。
-- 公开仓库、部署到公网、发帖，必须先问人。
-- 不 force push，不改写历史。
-
-### 7. 小步走，每一步都能玩
-
-先做一个最小可玩的版本，然后一步步加东西，每一步都提交一个能跑的版本：
-
-| 阶段 | 内容 |
-|---|---|
-| M0 原型 | 一间酒馆、3 分钟循环、记忆碎片、一个结局；自动截图和自动通关从第一天就有 |
-| M1 画面 | 光照烘焙（午后和黄昏两套，运行时混合）、修漏光、反射探针、墙纸、壁灯 |
-| M2–M6 内容 | 剧本和中英文本、人偶 NPC 的程序动画和时间表、对话、三个结局、菜单、存档、字体、分享卡片 |
-| M7 网页版 | WebGPU 构建、自定义加载页、网页冒烟测试 |
-| M8 发布准备 | 脚本化宣传片、落地页 |
-| v2 小镇 | 主街、电报局、教堂墓地、画布出逃、驿站马车和木头马、镇民、"第 N 稿"框架、开场打字页、记忆本 |
-| 试玩修复 | 新增 PlayBot，修好它发现的十来个问题 |
-
-每个阶段的具体改动都在 git 提交记录里。
-
-## 仓库结构
-
-| 路径 | 内容 |
-|---|---|
-| `AGENTS.md` | 总说明：规则、命令、路线图 |
-| `docs/` | 设计、美术、技术、素材授权、决定记录，还有人偶和马的骨架说明 |
-| `tools/` | 所有生成脚本：Blender 建模、音频合成、贴图、字体子集、评审截图、自动试玩、宣传片、落地页 |
-| `Game/` | Unity 工程。场景由 `Scripts/Editor/SetupSaloon.cs` 和 `SetupTown.cs` 生成；游戏逻辑在 `Scripts/Runtime/` |
-| `site/` | 落地页 |
+<img src="docs/images/voice-translate.png" alt="网易叭哥说的语音翻译：说中文，转成英文文字" width="480">
 
 ## 已知问题
 
-- 角色的衣服是刚体外壳，长裙和围裙不会跟着腿动。
-- 马的挽具和车辕之间有几厘米的缝。
-- 画布上的画是午后的光，到了黄昏不会跟着变红。
-- 街东头的天空偶尔能看到一条虚线，是电报线太细、在远处走样造成的。
-- Mac 版没有签名，第一次打开需要在"系统设置 → 隐私与安全性"里允许。
-
-更多问题见 [`docs/TECH.md`](docs/TECH.md) 的"已知问题"一节。
+衣服是刚体外壳，长裙不跟腿动；挽具和车辕有几厘米缝；画布上的画黄昏不变色；Mac 版未签名，首次打开需在"隐私与安全性"里允许。更多见 [`docs/TECH.md`](docs/TECH.md)。
 
 ## 授权
 
-- 代码、剧本和其他原创内容使用 [MIT 许可证](LICENSE)。
-- 第三方素材：模型、材质和 HDRI 来自 Poly Haven 和 ambientCG（CC0），构建时下载，不在仓库里。字体用的是 Noto Serif SC、Rye、IM Fell English SC 和 Zeyada，都是 SIL OFL 授权。仓库里只放了 Noto Serif SC 的子集，许可文本见 `Game/Assets/_MercyCreek/Resources/Fonts/OFL.txt`；其余几种字体在构建时下载。完整清单见 [`docs/ASSETS.md`](docs/ASSETS.md)。
-- 这是一个原创作品，向"循环 / 觉醒"这类故事致敬，和任何影视作品都没有关系。
+代码与原创内容使用 [MIT](LICENSE)。第三方素材来自 Poly Haven、ambientCG（CC0，构建时下载），字体为 Noto Serif SC、Rye、IM Fell English SC、Zeyada（SIL OFL），清单见 [`docs/ASSETS.md`](docs/ASSETS.md)。原创作品，致敬"循环 / 觉醒"类故事，与任何影视作品无关。
